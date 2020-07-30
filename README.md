@@ -2,7 +2,7 @@
 
 ![Preview of the data visualization Gutenberg block for WordPress](img/dataviz-gutenberg-block-preview-screenshot.png)
 
-A minimalist Gutenberg block plugin for adding data vizualisation to your blog posts. Learn more [on fourtonfish.com](https://fourtonfish.com/project/data-visualization-gutenberg-block/).
+A minimalist Gutenberg block plugin for adding data vizualisation to your WordPress blog posts. Learn more [on fourtonfish.com](https://fourtonfish.com/project/data-visualization-gutenberg-block/).
 
 ## Development
 
