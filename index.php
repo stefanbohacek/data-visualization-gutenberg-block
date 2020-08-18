@@ -564,7 +564,7 @@ SCRIPT;
             case 'line':
                 switch ( $size ) {
                     case 'small':
-                        $width_height = 'width="100" height="100"';
+                        $width_height = 'width="500" height="300"';
                         $style = 'max-width: ' . $width_restriction . 'px;';
                         break;
                     case 'large':
