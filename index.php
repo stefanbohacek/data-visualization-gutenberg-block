@@ -13,6 +13,9 @@
 defined( 'ABSPATH' ) || exit;
 
 class FTF_Dataviz_Gutenberg_Block {
+    public static $width_restriction_small_default = '400';
+    public static $width_restriction_medium_default = '720';
+
     public static $color_palettes = <<<SCRIPT
         var ftfHelpers = ftfHelpers || {};
         // This product includes color specifications and designs developed by Cynthia Brewer (http://colorbrewer.org/).
@@ -432,16 +435,13 @@ SCRIPT;
                 $i = 0;
 
                 foreach ( $grouped_data_values[array_search( $data_labels[$index], $grouped_data_labels )] as $i => $value ) {
-
                     $grouped_data_values[array_search( $data_labels[$index], $grouped_data_labels )][$i] += floatval( $data_series_groups[$index][$i] );
-
                 }
             } else {
                 $grouped_data_labels[] = $data_labels[$index];
                 $grouped_data_values[] = array_map( function( $datapoint ){
                     return floatval( $datapoint );
                 }, $data_series_groups[$index] );
-
             }
         }        
 
@@ -520,6 +520,24 @@ SCRIPT;
         wp_send_json( $data );
     }
 
+    function get_dataviz_width_restrictions(){
+        $width_restriction_small = get_option( 'ftf_dataviz_gutenberg_block_width_restriction_small', self::$width_restriction_small_default );
+        $width_restriction_medium = get_option( 'ftf_dataviz_gutenberg_block_width_restriction_medium', self::$width_restriction_medium_default );
+
+        if ( !( intval( $width_restriction_small ) > 0 ) ){
+            $width_restriction_small = self::$width_restriction_small_default;
+        }
+
+        if ( !( intval( $width_restriction_medium ) > 0 ) ){
+            $width_restriction_medium = self::$width_restriction_medium_default;
+        }
+
+        return array(
+            'small' => $width_restriction_small,
+            'medium' => $width_restriction_medium
+        );
+    }
+
     function render_callback( $attributes, $content ){
         $source_url = $attributes['dataSourceFileURL'];
 
@@ -534,17 +552,19 @@ SCRIPT;
         $data_suffix = $attributes['dataSuffix'];
         $type = $attributes['vizType'];
         $size = $attributes['vizSize'];
+
+        if ( empty( $size ) ){
+            $size = 'large';
+        }
+
         $use_log_scale = $attributes['useLogScale'];
         $column_filter = $attributes['columnsAsFilters'] ? 'true' : 'false' ;
         $ignore_null = $attributes['ignoreNullValues'] ? 'true' : 'false' ;
 
-        $width_restriction_default = '640';
-        $width_restriction = get_option( 'ftf_dataviz_gutenberg_block_width_restriction', $width_restriction_default );
+        $width_restrictions = self::get_dataviz_width_restrictions();
 
-
-        if ( !( intval( $width_restriction ) > 0 ) ){
-            $width_restriction = $width_restriction_default;
-        }
+        $width_restriction_small = $width_restrictions['small'];
+        $width_restriction_medium = $width_restrictions['medium'];
 
         $data = self::get_data( $attributes );
         $data_json = json_encode( $data );
@@ -564,19 +584,28 @@ SCRIPT;
             case 'line':
                 switch ( $size ) {
                     case 'small':
+                        $width_height = 'width="500" height="400"';
+                        $style = 'max-width: ' . $width_restriction_small . 'px;';
+                        break;
+                    case 'medium':
                         $width_height = 'width="500" height="300"';
-                        $style = 'max-width: ' . $width_restriction . 'px;';
+                        $style = 'max-width: ' . $width_restriction_medium . 'px;';
                         break;
                     case 'large':
-                        $width_height = 'width="400" height="200"';
+                        $width_height = 'width="500" height="200"';
+                        $style = 'max-width: 100%;';
                         break;
                 }
                 break;
             case 'horizontalBar':
                 switch ( $size ) {
                     case 'small':
-                        $width_height = 'width="400" height="200"';
-                        $style = 'max-width: ' . $width_restriction . 'px;';
+                        $width_height = 'width="400" height="400"';
+                        $style = 'max-width: ' . $width_restriction_small . 'px;';
+                        break;
+                    case 'medium':
+                        $width_height = 'width="400" height="300"';
+                        $style = 'max-width: ' . $width_restriction_medium . 'px;';
                         break;
                     case 'large':
                         $width_height = 'width="400" height="200"';
@@ -591,7 +620,10 @@ SCRIPT;
 
                 switch ( $size ) {
                     case 'small':
-                        $style = 'max-width: ' . $width_restriction . 'px;';
+                        $style = 'max-width: ' . $width_restriction_small . 'px;';
+                        break;
+                    case 'medium':
+                        $style = 'max-width: ' . $width_restriction_medium . 'px;';
                         break;
                 }
                 break;
@@ -600,7 +632,9 @@ SCRIPT;
         $table_css = '';
 
         if ( $size === 'small' ){
-            $table_css = ' style="max-width:' . $width_restriction . 'px; margin: 0 auto;" ';
+            $table_css = ' style="max-width:' . $width_restriction_small . 'px; margin: 0 auto;" ';
+        } elseif ( $size === 'medium' ){
+            $table_css = ' style="max-width:' . $width_restriction_medium . 'px; margin: 0 auto;" ';
         }
 
         if ( $data_sort === 'true' ){
@@ -639,7 +673,7 @@ SCRIPT;
         
 
         $table_html = <<<HTML
-            <table class="ftf-dataviz-table sr-only" border="0" cellpadding="5" width="100%" {$table_css} summary="This is the text alternative for the data visualization.">
+            <table class="ftf-dataviz-table sr-only {$attributes['className']}" border="0" cellpadding="5" width="100%" {$table_css} summary="This is the text alternative for the data visualization.">
                 <caption>{$data_label}</caption>
                 <tbody>
 HTML;
@@ -676,11 +710,12 @@ HTML;
             </script>
             <canvas
                 tabIndex="0"
-                class="ftf-dataviz-chart chart"
+                class="ftf-dataviz-chart chart {$attributes['className']}"
                 {$width_height}
                 style="{$style} margin: 1.5rem auto;"
                 role="img"
                 aria-label="{$data_label}"
+                data-size="{$size}"
                 data-source-id="{$source_file_id}"
                 data-label="{$data_label}"
                 data-log-scale="{$use_log_scale}"
@@ -723,13 +758,7 @@ HTML;
 
         $rendering_engine = get_option( 'ftf_dataviz_gutenberg_block_rendering_engine', 'chart.js' );
         $engine_script_name = 'ftf-dataviz-' . $rendering_engine;
-
-        $width_restriction_default = '640';
-        $width_restriction = get_option( 'ftf_dataviz_gutenberg_block_width_restriction', $width_restriction_default );
-
-        if ( !( intval( $width_restriction ) > 0 ) ){
-            $width_restriction = $width_restriction_default;
-        }
+        $width_restrictions = self::get_dataviz_width_restrictions();
 
         switch ( $rendering_engine ) {
             case 'chart.js':
@@ -798,7 +827,9 @@ HTML;
 
     function settings_init(){
         register_setting( 'ftf_dataviz_gutenberg_block', 'ftf_dataviz_gutenberg_block_rendering_engine', 'esc_attr' );
-        register_setting( 'ftf_dataviz_gutenberg_block', 'ftf_dataviz_gutenberg_block_width_restriction', 'esc_attr' );
+        register_setting( 'ftf_dataviz_gutenberg_block', 'ftf_dataviz_gutenberg_block_width_restriction_small', 'esc_attr' );
+        register_setting( 'ftf_dataviz_gutenberg_block', 'ftf_dataviz_gutenberg_block_width_restriction_medium', 'esc_attr' );
+        register_setting( 'ftf_dataviz_gutenberg_block', 'ftf_dataviz_gutenberg_block_width_restriction_large', 'esc_attr' );
 
         add_settings_section(
             'ftf_dataviz_gutenberg_block_settings', 
@@ -824,7 +855,10 @@ HTML;
 
     function render_settings_form(){
         $rendering_engine = get_option( 'ftf_dataviz_gutenberg_block_rendering_engine' );
-        $width_restriction = get_option( 'ftf_dataviz_gutenberg_block_width_restriction' );
+        $width_restrictions = self::get_dataviz_width_restrictions();
+        $width_restriction_small = $width_restrictions['small'];
+        $width_restriction_medium = $width_restrictions['medium'];
+
         ?>
 
         <div class="notice notice-info">
@@ -857,10 +891,32 @@ HTML;
                     <th scope="row">
                         <label for="ftf-dataviz-gutenberg-block-width-restriction">Width restriction</label>
                     </th>
+                </tr>
+                <tr>
+                    <th scope="row">
+                        <label for="ftf-dataviz-gutenberg-block-width-restriction-small">Small</label>
+                    </th>
                     <td>
-                        <input type="number" id="ftf-dataviz-gutenberg-block-width-restriction" name="ftf_dataviz_gutenberg_block_width_restriction" value="<?php echo $width_restriction; ?>" placeholder="640"> px
+                        <input type="number" id="ftf-dataviz-gutenberg-block-width-restriction-small"
+                        name="ftf_dataviz_gutenberg_block_width_restriction_small"
+                        value="<?php echo $width_restriction_small; ?>"
+                        placeholder="<?php echo self::$width_restriction_small_default; ?>"> px
                         <p class="description">
                             Limit width of charts when using "small" size.
+                        </p>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">
+                        <label for="ftf-dataviz-gutenberg-block-width-restriction-medium">Medium</label>
+                    </th>
+                    <td>
+                        <input type="number" id="ftf-dataviz-gutenberg-block-width-restriction-medium"
+                        name="ftf_dataviz_gutenberg_block_width_restriction_medium"
+                        value="<?php echo $width_restriction_small; ?>"
+                        placeholder="<?php echo self::$width_restriction_medium_default; ?>"> px
+                        <p class="description">
+                            Limit width of charts when using "medium" size.
                         </p>
                     </td>
                 </tr>

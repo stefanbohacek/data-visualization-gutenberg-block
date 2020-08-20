@@ -685,10 +685,13 @@ Object(_wordpress_blocks__WEBPACK_IMPORTED_MODULE_7__["registerBlockType"])('ftf
             label: 'Small',
             value: 'small'
           }, {
+            label: 'Medium',
+            value: 'medium'
+          }, {
             label: 'Large',
             value: 'large'
           }]
-        }), vizSize && vizSize === 'small' && Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])("p", null, Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])("strong", null, Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])("a", {
+        }), vizSize && (vizSize === 'small' || vizSize === 'medium') && Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])("p", null, Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])("strong", null, Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])("a", {
           href: "/wp-admin/admin.php?page=ftf-dataviz-gutenberg-block",
           target: "_blank"
         }, "Update size settings"))), Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])(_wordpress_components__WEBPACK_IMPORTED_MODULE_9__["SelectControl"], {

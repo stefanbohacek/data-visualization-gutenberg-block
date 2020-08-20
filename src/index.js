@@ -422,13 +422,18 @@ registerBlockType( 'ftf/dataviz-gutenberg-block', {
 
                             },
                             {
+                                label: 'Medium',
+                                value: 'medium'
+
+                            },
+                            {
                                 label: 'Large',
                                 value: 'large'
 
                             }
                         ] }
                     />
-                    { ( vizSize && vizSize === 'small' ) &&
+                    { ( vizSize && ( vizSize === 'small' || vizSize === 'medium') ) &&
                         <p>
                             <strong><a href="/wp-admin/admin.php?page=ftf-dataviz-gutenberg-block" target="_blank">Update size settings</a></strong>
                         </p>
