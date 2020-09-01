@@ -1,7 +1,7 @@
 import { __ } from '@wordpress/i18n';
 import { registerBlockType } from '@wordpress/blocks';
 import { MediaUpload, MediaUploadCheck, RichText, InspectorControls } from '@wordpress/block-editor';
-import { BaseControl, Button, PanelBody, CheckboxControl, TextControl, SelectControl, ColorPalette, Placeholder } from '@wordpress/components';
+import { BaseControl, Button, PanelBody, CheckboxControl, TextControl, TextareaControl, SelectControl, ColorPalette, Placeholder } from '@wordpress/components';
 import { useEffect, useState } from '@wordpress/element';
 
 
@@ -105,7 +105,7 @@ registerBlockType( 'ftf/dataviz-gutenberg-block', {
         },
         dataSource: {
             type: 'string',
-            default: ''
+            default: 'file'
         },
         dataLimit: {
             type: 'string'
@@ -140,7 +140,7 @@ registerBlockType( 'ftf/dataviz-gutenberg-block', {
         },
         vizType: {
             type: 'string',
-            default: ''
+            default: 'bar'
         },
         vizSize: {
             type: 'string',
@@ -167,6 +167,10 @@ registerBlockType( 'ftf/dataviz-gutenberg-block', {
             default: ''
         },
         colorScheme: {
+            type: 'string',
+            default: ''
+        },
+        chartConfigJSON: {
             type: 'string',
             default: ''
         }
@@ -234,6 +238,7 @@ registerBlockType( 'ftf/dataviz-gutenberg-block', {
 
                 if ( this.props.attributes.dataSourceFileID && ( typeof ftfDataviz === 'undefined' || !ftfDataviz[this.props.attributes.dataSourceFileID] ) ){
                     console.log( 'fetching new data...', this.props.attributes );
+
                     jQuery.ajax({
                         url: ajaxurl,
                         data: {
@@ -298,9 +303,9 @@ registerBlockType( 'ftf/dataviz-gutenberg-block', {
                 ignoreNullValues,
                 color,
                 colorScheme,
+                chartConfigJSON,
                 content
             },
-
             setAttributes,
             className,
         } = this.props;
@@ -329,7 +334,7 @@ registerBlockType( 'ftf/dataviz-gutenberg-block', {
                 <PanelBody
                     title={ __( 'Data visualization', 'ftf-dataviz-gutenberg-block' ) }
                 >
-                    <SelectControl
+                    { dataSource !== 'config' && <SelectControl
                         label="Visualization type"
                         value={ vizType }
                         onChange={ ( vizType ) => setState( { vizType } ) }
@@ -372,8 +377,8 @@ registerBlockType( 'ftf/dataviz-gutenberg-block', {
                                 value: 'table'
                             }
                         ] }
-                    />
-                    { [ 'line', 'bar', 'horizontalBar', 'pie', 'doughnut', 'polarArea', 'radar' ].indexOf( vizType ) !== -1 &&
+                    /> }
+                    { dataSource !== 'config' && [ 'line', 'bar', 'horizontalBar', 'pie', 'doughnut', 'polarArea', 'radar' ].indexOf( vizType ) !== -1 &&
                         <div>
                             <SelectControl
                                 label="Color scheme (Palette size)"
@@ -383,7 +388,7 @@ registerBlockType( 'ftf/dataviz-gutenberg-block', {
                                 help="Colors will be adjusted based on the size of the dataset and the visualization type."
                             />
 
-                    { ( colorbrewer && colorbrewer[colorScheme] && colorbrewer[colorScheme][8]  ) && <div>
+                    { dataSource !== 'config' && ( colorbrewer && colorbrewer[colorScheme] && colorbrewer[colorScheme][8]  ) && <div>
                         <div style={ { height: '40px', width: '100%', marginBottom: '20px', backgroundImage: colorScheme ? `linear-gradient(
                               to right,
                               ${colorbrewer[colorScheme][8][0]},
@@ -406,7 +411,7 @@ registerBlockType( 'ftf/dataviz-gutenberg-block', {
                             </div> }
                         </div>                            
                     }
-                    <SelectControl
+                    { dataSource !== 'config' && <SelectControl
                         label="Size"
                         value={ vizSize }
                         onChange={ ( vizSize ) => setState( { vizSize } ) }
@@ -432,7 +437,7 @@ registerBlockType( 'ftf/dataviz-gutenberg-block', {
 
                             }
                         ] }
-                    />
+                    /> }
                     { ( vizSize && ( vizSize === 'small' || vizSize === 'medium') ) &&
                         <p>
                             <strong><a href="/wp-admin/admin.php?page=ftf-dataviz-gutenberg-block" target="_blank">Update size settings</a></strong>
@@ -460,11 +465,16 @@ registerBlockType( 'ftf/dataviz-gutenberg-block', {
                             // },
                             {
                                 label: 'Configuration file',
-                                value: 'config',
-                                disabled: true
+                                value: 'config'
                             }
                         ] }
                     />
+                    { ( dataSource && dataSource === 'config' ) && <TextareaControl
+                        label="Configuration object"
+                        help="Enter the JSON configuration object for your chart"
+                        value={ chartConfigJSON }
+                        onChange={ ( chartConfigJSON ) => setState( { chartConfigJSON } ) }
+                    /> }
                     { ( dataSource && dataSource === 'url' ) && <TextControl
                         label="URL"
                         type="url"
@@ -493,16 +503,11 @@ registerBlockType( 'ftf/dataviz-gutenberg-block', {
                                                 //     return val !== label;
                                                 // } );
                                                 dataColumns.forEach( function( val ){
-                                                    console.log( 'val', val );
-                                                    console.log( 'label', label );
                                                     if ( val !== label ){
                                                         dataColumnsValues.push( val );
                                                     }
                                                 } );
                                             }
-
-                                            console.log( 'dataColumns', dataColumns );
-                                            console.log( 'dataColumnsValues', dataColumnsValues );
 
                                             return setState( { dataColumns: dataColumnsValues } );
                                         } }
@@ -534,8 +539,8 @@ registerBlockType( 'ftf/dataviz-gutenberg-block', {
                                 </Button>
                             </BaseControl>
                         ) }
-                    /> }
-                    { dataSource && ( dataSourceURL || dataSourceFileID ) && <div>
+                    /> }                    
+                    { dataSource && dataSource !== 'config' && ( dataSourceURL || dataSourceFileID ) && <div>
                         <div>
                             <CheckboxControl
                                 label="Ignore empty and zero values"
@@ -588,7 +593,7 @@ registerBlockType( 'ftf/dataviz-gutenberg-block', {
                         />                        
 
                     </div> }
-                    { [ 'line', 'bar', 'horizontalBar' ].indexOf( vizType ) !== -1 &&
+                    { dataSource !== 'config' && [ 'line', 'bar', 'horizontalBar' ].indexOf( vizType ) !== -1 &&
                     <div>
                         <CheckboxControl
                             label="Use logarithmic scale"
@@ -601,8 +606,8 @@ registerBlockType( 'ftf/dataviz-gutenberg-block', {
                 </PanelBody>
             </InspectorControls>,
             <div>
-                { !dataSourceFileID && <Placeholder icon="chart-pie" label="Data Visualization" instructions="" /> }
-                { dataSourceFileID && [ 'line', 'bar', 'horizontalBar', 'pie', 'doughnut', 'polarArea', 'radar' ].indexOf( vizType ) !== -1 && <canvas
+                { ( !dataSource || ( dataSource === 'config' && !chartConfigJSON ) || ( dataSource === 'file' && !dataSourceFileID ) ) && <Placeholder icon="chart-pie" label="Data Visualization" instructions="" /> }
+                { dataSource === 'file' && dataSourceFileID && [ 'line', 'bar', 'horizontalBar', 'pie', 'doughnut', 'polarArea', 'radar' ].indexOf( vizType ) !== -1 && <canvas
                     class="ftf-dataviz-chart chart"
                     role="img"
                     aria-label={ label }
@@ -619,16 +624,21 @@ registerBlockType( 'ftf/dataviz-gutenberg-block', {
                     data-color-scheme={ colorScheme }
                     data-type={ vizType }
                 ></canvas> }
+                { dataSource === 'config' && chartConfigJSON && <canvas
+                    class="ftf-dataviz-chart chart"
+                    role="img"
+                    data-config={ chartConfigJSON }
+                ></canvas> }
                 { dataSourceFileID && [ 'table' ].indexOf( vizType ) !== -1 &&
                     <table className="ftf-dataviz-table" border="0" cellpadding="5" width="100%" summary="This is the text alternative for the data visualization."></table>
                 }
-                <RichText
+                { dataSource === 'file' && <RichText
                     tagName="p"
                     className={ className }
                     placeholder="Label"
                     onChange={ ( label ) => setAttributes( { label } ) }
                     value={ label }
-                />
+                /> }
             </div>
         ];
     } }

@@ -391,7 +391,7 @@ Object(_wordpress_blocks__WEBPACK_IMPORTED_MODULE_7__["registerBlockType"])('ftf
     },
     dataSource: {
       type: 'string',
-      default: ''
+      default: 'file'
     },
     dataLimit: {
       type: 'string'
@@ -426,7 +426,7 @@ Object(_wordpress_blocks__WEBPACK_IMPORTED_MODULE_7__["registerBlockType"])('ftf
     },
     vizType: {
       type: 'string',
-      default: ''
+      default: 'bar'
     },
     vizSize: {
       type: 'string',
@@ -453,6 +453,10 @@ Object(_wordpress_blocks__WEBPACK_IMPORTED_MODULE_7__["registerBlockType"])('ftf
       default: ''
     },
     colorScheme: {
+      type: 'string',
+      default: ''
+    },
+    chartConfigJSON: {
       type: 'string',
       default: ''
     }
@@ -589,6 +593,7 @@ Object(_wordpress_blocks__WEBPACK_IMPORTED_MODULE_7__["registerBlockType"])('ftf
             ignoreNullValues = _this$props$attribute.ignoreNullValues,
             color = _this$props$attribute.color,
             colorScheme = _this$props$attribute.colorScheme,
+            chartConfigJSON = _this$props$attribute.chartConfigJSON,
             content = _this$props$attribute.content,
             setAttributes = _this$props.setAttributes,
             className = _this$props.className;
@@ -611,7 +616,7 @@ Object(_wordpress_blocks__WEBPACK_IMPORTED_MODULE_7__["registerBlockType"])('ftf
         var ts = new Date().getTime();
         return [Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])(_wordpress_block_editor__WEBPACK_IMPORTED_MODULE_8__["InspectorControls"], null, Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])(_wordpress_components__WEBPACK_IMPORTED_MODULE_9__["PanelBody"], {
           title: Object(_wordpress_i18n__WEBPACK_IMPORTED_MODULE_6__["__"])('Data visualization', 'ftf-dataviz-gutenberg-block')
-        }, Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])(_wordpress_components__WEBPACK_IMPORTED_MODULE_9__["SelectControl"], {
+        }, dataSource !== 'config' && Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])(_wordpress_components__WEBPACK_IMPORTED_MODULE_9__["SelectControl"], {
           label: "Visualization type",
           value: vizType,
           onChange: function onChange(vizType) {
@@ -648,7 +653,7 @@ Object(_wordpress_blocks__WEBPACK_IMPORTED_MODULE_7__["registerBlockType"])('ftf
             label: 'Table',
             value: 'table'
           }]
-        }), ['line', 'bar', 'horizontalBar', 'pie', 'doughnut', 'polarArea', 'radar'].indexOf(vizType) !== -1 && Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])("div", null, Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])(_wordpress_components__WEBPACK_IMPORTED_MODULE_9__["SelectControl"], {
+        }), dataSource !== 'config' && ['line', 'bar', 'horizontalBar', 'pie', 'doughnut', 'polarArea', 'radar'].indexOf(vizType) !== -1 && Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])("div", null, Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])(_wordpress_components__WEBPACK_IMPORTED_MODULE_9__["SelectControl"], {
           label: "Color scheme (Palette size)",
           value: colorScheme,
           onChange: function onChange(colorScheme) {
@@ -658,7 +663,7 @@ Object(_wordpress_blocks__WEBPACK_IMPORTED_MODULE_7__["registerBlockType"])('ftf
           },
           options: colorSchemeOptions,
           help: "Colors will be adjusted based on the size of the dataset and the visualization type."
-        }), colorbrewer && colorbrewer[colorScheme] && colorbrewer[colorScheme][8] && Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])("div", null, Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])("div", {
+        }), dataSource !== 'config' && colorbrewer && colorbrewer[colorScheme] && colorbrewer[colorScheme][8] && Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])("div", null, Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])("div", {
           style: {
             height: '40px',
             width: '100%',
@@ -669,7 +674,7 @@ Object(_wordpress_blocks__WEBPACK_IMPORTED_MODULE_7__["registerBlockType"])('ftf
         }), Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])("p", null, "Via ", Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])("a", {
           href: "https://colorbrewer2.org/",
           target: "_blank"
-        }, "colorbrewer2.org"), "."))), Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])(_wordpress_components__WEBPACK_IMPORTED_MODULE_9__["SelectControl"], {
+        }, "colorbrewer2.org"), "."))), dataSource !== 'config' && Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])(_wordpress_components__WEBPACK_IMPORTED_MODULE_9__["SelectControl"], {
           label: "Size",
           value: vizSize,
           onChange: function onChange(vizSize) {
@@ -716,9 +721,17 @@ Object(_wordpress_blocks__WEBPACK_IMPORTED_MODULE_7__["registerBlockType"])('ftf
           // },
           {
             label: 'Configuration file',
-            value: 'config',
-            disabled: true
+            value: 'config'
           }]
+        }), dataSource && dataSource === 'config' && Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])(_wordpress_components__WEBPACK_IMPORTED_MODULE_9__["TextareaControl"], {
+          label: "Configuration object",
+          help: "Enter the JSON configuration object for your chart",
+          value: chartConfigJSON,
+          onChange: function onChange(chartConfigJSON) {
+            return setState({
+              chartConfigJSON: chartConfigJSON
+            });
+          }
         }), dataSource && dataSource === 'url' && Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])(_wordpress_components__WEBPACK_IMPORTED_MODULE_9__["TextControl"], {
           label: "URL",
           type: "url",
@@ -751,7 +764,7 @@ Object(_wordpress_blocks__WEBPACK_IMPORTED_MODULE_7__["registerBlockType"])('ftf
               className: "button"
             }, "Select data file"));
           }
-        }), dataSource && (dataSourceURL || dataSourceFileID) && Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])("div", null, Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])("div", null, Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])(_wordpress_components__WEBPACK_IMPORTED_MODULE_9__["CheckboxControl"], {
+        }), dataSource && dataSource !== 'config' && (dataSourceURL || dataSourceFileID) && Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])("div", null, Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])("div", null, Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])(_wordpress_components__WEBPACK_IMPORTED_MODULE_9__["CheckboxControl"], {
           label: "Ignore empty and zero values",
           help: "Hide columns with missing data or zero values.",
           checked: ignoreNullValues,
@@ -802,7 +815,7 @@ Object(_wordpress_blocks__WEBPACK_IMPORTED_MODULE_7__["registerBlockType"])('ftf
               dataSuffix: dataSuffix
             });
           }
-        })), ['line', 'bar', 'horizontalBar'].indexOf(vizType) !== -1 && Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])("div", null, Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])(_wordpress_components__WEBPACK_IMPORTED_MODULE_9__["CheckboxControl"], {
+        })), dataSource !== 'config' && ['line', 'bar', 'horizontalBar'].indexOf(vizType) !== -1 && Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])("div", null, Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])(_wordpress_components__WEBPACK_IMPORTED_MODULE_9__["CheckboxControl"], {
           label: "Use logarithmic scale",
           help: "Useful for datasets with a wide range of values.",
           checked: useLogScale,
@@ -811,11 +824,11 @@ Object(_wordpress_blocks__WEBPACK_IMPORTED_MODULE_7__["registerBlockType"])('ftf
               useLogScale: useLogScale
             });
           }
-        })))), Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])("div", null, !dataSourceFileID && Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])(_wordpress_components__WEBPACK_IMPORTED_MODULE_9__["Placeholder"], {
+        })))), Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])("div", null, (!dataSource || dataSource === 'config' && !chartConfigJSON || dataSource === 'file' && !dataSourceFileID) && Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])(_wordpress_components__WEBPACK_IMPORTED_MODULE_9__["Placeholder"], {
           icon: "chart-pie",
           label: "Data Visualization",
           instructions: ""
-        }), dataSourceFileID && ['line', 'bar', 'horizontalBar', 'pie', 'doughnut', 'polarArea', 'radar'].indexOf(vizType) !== -1 && Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])("canvas", {
+        }), dataSource === 'file' && dataSourceFileID && ['line', 'bar', 'horizontalBar', 'pie', 'doughnut', 'polarArea', 'radar'].indexOf(vizType) !== -1 && Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])("canvas", {
           class: "ftf-dataviz-chart chart",
           role: "img",
           "aria-label": label,
@@ -831,13 +844,17 @@ Object(_wordpress_blocks__WEBPACK_IMPORTED_MODULE_7__["registerBlockType"])('ftf
           "data-axis-label-data": label,
           "data-color-scheme": colorScheme,
           "data-type": vizType
+        }), dataSource === 'config' && chartConfigJSON && Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])("canvas", {
+          class: "ftf-dataviz-chart chart",
+          role: "img",
+          "data-config": chartConfigJSON
         }), dataSourceFileID && ['table'].indexOf(vizType) !== -1 && Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])("table", {
           className: "ftf-dataviz-table",
           border: "0",
           cellpadding: "5",
           width: "100%",
           summary: "This is the text alternative for the data visualization."
-        }), Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])(_wordpress_block_editor__WEBPACK_IMPORTED_MODULE_8__["RichText"], {
+        }), dataSource === 'file' && Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])(_wordpress_block_editor__WEBPACK_IMPORTED_MODULE_8__["RichText"], {
           tagName: "p",
           className: className,
           placeholder: "Label",

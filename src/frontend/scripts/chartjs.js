@@ -94,339 +94,339 @@ ftfHelpers.padZero = function( str, len ) {
 ftfHelpers.renderChart = function( chartEl ){
     if ( !chartEl ){ return false; }
 
-    let colorSchemeIndex = 3;
-    let datavizType = chartEl.dataset.type || 'bar';
+    let chartOptions = {};
 
-    let chartLabels, chartData;
+    if ( chartEl.dataset.config ){
+        try{
+            chartOptions = JSON.parse( chartEl.dataset.config );
+        } catch( err ){ /* noop */ }
+    } else{
+        let colorSchemeIndex = 3;
+        let datavizType = chartEl.dataset.type || 'bar';
 
-    if ( chartEl.dataset.sort && chartEl.dataset.sort === 'true' ){
-        chartLabels = JSON.parse( JSON.stringify( window.ftfDataviz[parseInt( chartEl.dataset.sourceId )].data_labels_sorted ) );
-        chartData = JSON.parse( JSON.stringify( window.ftfDataviz[parseInt( chartEl.dataset.sourceId )].data_series_sorted ) );
-    } else {
-        chartLabels = JSON.parse( JSON.stringify( window.ftfDataviz[parseInt( chartEl.dataset.sourceId )].data_labels ) );
-        chartData = JSON.parse( JSON.stringify( window.ftfDataviz[parseInt( chartEl.dataset.sourceId )].data_series ) );
-    }
+        let chartLabels, chartData;
 
-    if ( chartEl.dataset.ignoreNull && chartEl.dataset.ignoreNull === 'true' ){
+        if ( chartEl.dataset.sort && chartEl.dataset.sort === 'true' ){
+            chartLabels = JSON.parse( JSON.stringify( window.ftfDataviz[parseInt( chartEl.dataset.sourceId )].data_labels_sorted ) );
+            chartData = JSON.parse( JSON.stringify( window.ftfDataviz[parseInt( chartEl.dataset.sourceId )].data_series_sorted ) );
+        } else {
+            chartLabels = JSON.parse( JSON.stringify( window.ftfDataviz[parseInt( chartEl.dataset.sourceId )].data_labels ) );
+            chartData = JSON.parse( JSON.stringify( window.ftfDataviz[parseInt( chartEl.dataset.sourceId )].data_series ) );
+        }
 
-        chartData.forEach( function( datapoints, indexOuter ){
-            let removeDatapoint = true;
+        if ( chartEl.dataset.ignoreNull && chartEl.dataset.ignoreNull === 'true' ){
 
-            datapoints.forEach( function( datapoint, indexInner ){
-                if ( chartData[indexOuter][indexInner] && parseInt( chartData[indexOuter][indexInner] ) !== 0 ){
-                    removeDatapoint = false;
+            chartData.forEach( function( datapoints, indexOuter ){
+                let removeDatapoint = true;
+
+                datapoints.forEach( function( datapoint, indexInner ){
+                    if ( chartData[indexOuter][indexInner] && parseInt( chartData[indexOuter][indexInner] ) !== 0 ){
+                        removeDatapoint = false;
+                    }
+                } );
+
+                if ( removeDatapoint ){
+                    delete chartData[indexOuter];
+                    delete chartLabels[indexOuter];
                 }
             } );
 
-            if ( removeDatapoint ){
-                delete chartData[indexOuter];
-                delete chartLabels[indexOuter];
+            chartData = chartData.filter( function ( item ){ return item != undefined } );
+            chartLabels = chartLabels.filter( function ( item ){ return item != undefined } );
+        }
+
+
+        if ( chartEl.dataset.sort && chartEl.dataset.sort === 'true' && chartEl.dataset.limit ){
+            chartLabels = chartLabels.slice( 0, chartEl.dataset.limit );
+            chartData = chartData.slice( 0, chartEl.dataset.limit );
+        }
+
+        if ( chartData.length > 3 ){
+            colorSchemeIndex = chartData.length;
+        }
+
+        const dataRows = chartData[0].length;
+        let datasets = [];
+
+        for( let i = 0; i < dataRows; i++ ){
+            let dataArray = [];
+            let label = '';
+
+            chartData.forEach( function( data, index ){
+                label = window.ftfDataviz[parseInt( chartEl.dataset.sourceId )].axis_label_values[i];
+
+                // const label = chartData[i][index];
+                dataArray.push( chartData[index][i] );
+            } );
+
+            let dataset = {
+                label: label,
+                data: dataArray,
+                __custom_meta: {
+                    prefix: chartEl.dataset.prefix,
+                    suffix: chartEl.dataset.suffix
+                }
+            };
+
+            if ( chartEl.dataset.colorScheme && ftfHelpers.colorPalettes[chartEl.dataset.colorScheme] ){
+                if ( [ 'bar', 'horizontalBar' ].indexOf( datavizType ) !== -1 ){
+                    dataset.backgroundColor = ftfHelpers.colorPalettes[chartEl.dataset.colorScheme][dataRows+3][i];
+                } else if ( datavizType === 'line' ){
+                    dataset.borderColor = ftfHelpers.colorPalettes[chartEl.dataset.colorScheme][dataRows+3][i];
+                    dataset.fill = false;
+                }
             }
-        } );
 
-        chartData = chartData.filter( function ( item ){ return item != undefined } );
-        chartLabels = chartLabels.filter( function ( item ){ return item != undefined } );
-    }
+            datasets.push( dataset );
+        }
 
-
-    if ( chartEl.dataset.sort && chartEl.dataset.sort === 'true' && chartEl.dataset.limit ){
-        chartLabels = chartLabels.slice( 0, chartEl.dataset.limit );
-        chartData = chartData.slice( 0, chartEl.dataset.limit );
-    }
-
-    if ( chartData.length > 3 ){
-        colorSchemeIndex = chartData.length;
-    }
-
-    const dataRows = chartData[0].length;
-    let datasets = [];
-
-    for( let i = 0; i < dataRows; i++ ){
-        let dataArray = [];
-        let label = '';
-
-        chartData.forEach( function( data, index ){
-            label = window.ftfDataviz[parseInt( chartEl.dataset.sourceId )].axis_label_values[i];
-
-            // const label = chartData[i][index];
-            dataArray.push( chartData[index][i] );
-        } );
-
-        let dataset = {
-            label: label,
-            data: dataArray,
-            __custom_meta: {
-                prefix: chartEl.dataset.prefix,
-                suffix: chartEl.dataset.suffix
+        if ( chartEl.dataset.columnFilter && chartEl.dataset.columnFilter === 'true' ){
+            for ( let i = 1; i < datasets.length; i++ ){
+                let selectHtml = `<label>${datasets[i].label}
+                    <select name="ftf-dataviz-filter-${ chartEl.dataset.sourceId }" id="ftf-dataviz-filter-${ chartEl.dataset.sourceId }">
+                      ${
+                        datasets[i].data.map( function( data ){
+                            return `<option value="option">option</option>`;
+                        } )
+                      }
+                    </select>
+                </label>`; 
             }
+        
+            datasets = [datasets[0]];
+        }
+
+        chartOptions = {
+            type: datavizType,
+            data: {
+                labels: chartLabels,
+                datasets: datasets
+            },
+            options: {}
         };
 
-        if ( chartEl.dataset.colorScheme && ftfHelpers.colorPalettes[chartEl.dataset.colorScheme] ){
-            if ( [ 'bar', 'horizontalBar' ].indexOf( datavizType ) !== -1 ){
-                dataset.backgroundColor = ftfHelpers.colorPalettes[chartEl.dataset.colorScheme][dataRows+3][i];
-            } else if ( datavizType === 'line' ){
-                dataset.borderColor = ftfHelpers.colorPalettes[chartEl.dataset.colorScheme][dataRows+3][i];
-                dataset.fill = false;
-            }
-        }
+        switch ( datavizType ){
+            case 'horizontalBar':
+            case 'bar':
+            case 'line':
+                const axesLabels = [{
+                    scaleLabel: {
+                        display: true,
+                        // labelString: chartEl.dataset.axisLabelData
+                        labelString: window.ftfDataviz[parseInt( chartEl.dataset.sourceId )].axis_label_title
+                    },
+                    ticks: {
+                        beginAtZero: true,
+                        // userCallback: function( value, index, values)  {
+                        //     return value.toLocaleString();
+                        // }
+                    }
+                }];
 
-        datasets.push( dataset );
-    }
+                const axesValues = [{
+                    scaleLabel: {
+                        display: true,
+                        labelString: chartEl.dataset.label
+                    },
+                    type: chartEl.dataset.logScale ? 'logarithmic' : 'linear',
+                    ticks: {
+                        beginAtZero: true,
+                        userCallback: function( value, index, values)  {
+                            return chartEl.dataset.prefix + value.toLocaleString() + chartEl.dataset.suffix;
+                        }
+                    }
+                }];
 
-    if ( chartEl.dataset.columnFilter && chartEl.dataset.columnFilter === 'true' ){
-        console.log( 'datasets', datasets );
-
-        for ( let i = 1; i < datasets.length; i++ ){
-            console.log( 'data map', datasets[i] );
-            let selectHtml = `<label>${datasets[i].label}
-                <select name="ftf-dataviz-filter-${ chartEl.dataset.sourceId }" id="ftf-dataviz-filter-${ chartEl.dataset.sourceId }">
-                  ${
-                    datasets[i].data.map( function( data ){
-                        console.log( 'data map', data );
-                        return `<option value="option">option</option>`;
-                    } )
-                  }
-                </select>
-            </label>`; 
-
-            console.log( 'dataset ' + i, datasets[i] );
-            console.log( 'selectHtml', selectHtml );
-
-        }
-    
-        datasets = [datasets[0]];
-    }
-
-    let chartOptions = {
-        type: datavizType,
-        data: {
-            labels: chartLabels,
-            datasets: datasets
-        },
-        options: {}
-    };
-
-    switch ( datavizType ){
-        case 'horizontalBar':
-        case 'bar':
-        case 'line':
-            const axesLabels = [{
-                scaleLabel: {
-                    display: true,
-                    // labelString: chartEl.dataset.axisLabelData
-                    labelString: window.ftfDataviz[parseInt( chartEl.dataset.sourceId )].axis_label_title
-                },
-                ticks: {
-                    beginAtZero: true,
-                    // userCallback: function( value, index, values)  {
-                    //     return value.toLocaleString();
-                    // }
+                if ( chartEl.dataset.logScale && chartData.length > 4 ){
+                    /* Temporary fix for labels overlapping when using logarithmic scale. */
+                    // axesValues[0].ticks.minRotation = 30;
+                    axesValues[0].ticks.maxTicksLimit = chartData.length;
                 }
-            }];
 
-            const axesValues = [{
-                scaleLabel: {
-                    display: true,
-                    labelString: chartEl.dataset.label
-                },
-                type: chartEl.dataset.logScale ? 'logarithmic' : 'linear',
-                ticks: {
-                    beginAtZero: true,
-                    userCallback: function( value, index, values)  {
-                        return chartEl.dataset.prefix + value.toLocaleString() + chartEl.dataset.suffix;
+                if ( ftfHelpers.isAdmin() ){
+                    // axesValues[0].ticks.maxTicksLimit = chartData.length;
+                    axesValues[0].ticks.maxTicksLimit = 4;
+                }
+
+                if ( datavizType === 'horizontalBar' ){
+                    chartOptions.options.scales = {
+                        xAxes: axesValues,
+                        yAxes: axesLabels
+                    };
+
+                    chartOptions.options.tooltips = {
+                      callbacks: {
+                        label: function( tooltipItem, data ) {
+                            return data['datasets'][0]['__custom_meta']['prefix'] + tooltipItem.xLabel.toLocaleString() + data['datasets'][0]['__custom_meta']['suffix'];
+                        }
+                      }
+                    }
+
+                } else {
+                    chartOptions.options.scales = {
+                        xAxes: axesLabels,
+                        yAxes: axesValues
+                    };
+
+                    chartOptions.options.tooltips = {
+                      callbacks: {
+                        title: function(tooltipItem, data) {
+                            return data.datasets[tooltipItem[0].datasetIndex].label;
+                        },
+                        label: function( tooltipItem, data ) {
+                            return `${data.labels[tooltipItem.index]}: ${data['datasets'][0]['__custom_meta']['prefix']}${tooltipItem.yLabel.toLocaleString()}${data['datasets'][0]['__custom_meta']['suffix']}`;
+                        }
+                      }
                     }
                 }
-            }];
 
-            if ( chartEl.dataset.logScale && chartData.length > 4 ){
-                /* Temporary fix for labels overlapping when using logarithmic scale. */
-                // axesValues[0].ticks.minRotation = 30;
-                axesValues[0].ticks.maxTicksLimit = chartData.length;
-            }
+                chartOptions.options.responsive = true;
+                
+                if ( ftfHelpers.colorPalettes[chartEl.dataset.colorScheme] ){
+                    chartOptions.data.datasets.forEach( function( dataset, index ){
+                        dataset.hoverBorderWidth = 4;
+                        dataset.hoverBorderColor = ftfHelpers.pSBC( -0.05, ftfHelpers.invertColor( ftfHelpers.colorPalettes[chartEl.dataset.colorScheme][dataRows+3][index] ) );
+                        dataset.borderWidth = 4;
+                    } );
 
-            if ( ftfHelpers.isAdmin() ){
-                // axesValues[0].ticks.maxTicksLimit = chartData.length;
-                axesValues[0].ticks.maxTicksLimit = 4;
-            }
-
-            if ( datavizType === 'horizontalBar' ){
-                chartOptions.options.scales = {
-                    xAxes: axesValues,
-                    yAxes: axesLabels
-                };
-
-                chartOptions.options.tooltips = {
-                  callbacks: {
-                    label: function( tooltipItem, data ) {
-                        return data['datasets'][0]['__custom_meta']['prefix'] + tooltipItem.xLabel.toLocaleString() + data['datasets'][0]['__custom_meta']['suffix'];
-                    }
-                  }
                 }
 
-            } else {
-                chartOptions.options.scales = {
-                    xAxes: axesLabels,
-                    yAxes: axesValues
-                };
+                break;
+            case 'pie':
+            case 'doughnut':
+            case 'polarArea':
+                for( let i = 0; i < dataRows; i++ ){
+                    if ( chartOptions.data && chartOptions.data.datasets[i] ){
+                        let selectedColorScheme;
+
+                        if ( ftfHelpers.colorPalettes[chartEl.dataset.colorScheme][chartLabels.length] ){
+                            selectedColorScheme = ftfHelpers.colorPalettes[chartEl.dataset.colorScheme][chartLabels.length];
+                        } else {
+
+                            selectedColorScheme = ftfHelpers.colorPalettes[chartEl.dataset.colorScheme][Object.keys( ftfHelpers.colorPalettes[chartEl.dataset.colorScheme] ).length - 3];
+                        }
+
+                        chartOptions.data.datasets[i].backgroundColor = selectedColorScheme;
+                        chartOptions.data.datasets[i].hoverBorderColor = selectedColorScheme.map( function( color ){
+                            return ftfHelpers.pSBC( -0.05, ftfHelpers.invertColor( color ) );
+                        } );
+
+                        chartOptions.data.datasets[i].hoverBorderWidth = 4;
+                        chartOptions.data.datasets[i].borderWidth = 4;
+                    }
+                }
 
                 chartOptions.options.tooltips = {
                   callbacks: {
                     title: function(tooltipItem, data) {
-                        return data.datasets[tooltipItem[0].datasetIndex].label;
+                        return data['labels'][tooltipItem[0]['index']];
                     },
                     label: function( tooltipItem, data ) {
-                        return `${data.labels[tooltipItem.index]}: ${data['datasets'][0]['__custom_meta']['prefix']}${tooltipItem.yLabel.toLocaleString()}${data['datasets'][0]['__custom_meta']['suffix']}`;
+                        return data['datasets'][0]['__custom_meta']['prefix'] + parseInt( data['datasets'][0]['data'][tooltipItem['index']] ).toLocaleString() + data['datasets'][0]['__custom_meta']['suffix'];
                     }
                   }
                 }
-            }
 
-            chartOptions.options.responsive = true;
-            
-            if ( ftfHelpers.colorPalettes[chartEl.dataset.colorScheme] ){
-                chartOptions.data.datasets.forEach( function( dataset, index ){
-                    dataset.hoverBorderWidth = 4;
-                    dataset.hoverBorderColor = ftfHelpers.pSBC( -0.05, ftfHelpers.invertColor( ftfHelpers.colorPalettes[chartEl.dataset.colorScheme][dataRows+3][index] ) );
-                    dataset.borderWidth = 4;
-                } );
+                break;
+            case 'radar':
+                for( let i = 0; i < dataRows; i++ ){
+                    if ( chartOptions.data && chartOptions.data.datasets[i] ){
+                    
 
-            }
+                        let selectedColorScheme;
 
-            break;
-        case 'pie':
-        case 'doughnut':
-        case 'polarArea':
-            for( let i = 0; i < dataRows; i++ ){
-                if ( chartOptions.data && chartOptions.data.datasets[i] ){
-                    let selectedColorScheme;
+                        if ( ftfHelpers.colorPalettes[chartEl.dataset.colorScheme][dataRows] ){
+                            selectedColorScheme = ftfHelpers.colorPalettes[chartEl.dataset.colorScheme][dataRows];
+                        } else {
+                            selectedColorScheme = ftfHelpers.colorPalettes[chartEl.dataset.colorScheme][Object.keys( ftfHelpers.colorPalettes[chartEl.dataset.colorScheme] ).length - 3];
+                        }
 
-                    if ( ftfHelpers.colorPalettes[chartEl.dataset.colorScheme][chartLabels.length] ){
-                        selectedColorScheme = ftfHelpers.colorPalettes[chartEl.dataset.colorScheme][chartLabels.length];
-                    } else {
+                        // chartOptions.data.datasets[i].fill = 'start';
+                        chartOptions.data.datasets[i].backgroundColor = ftfHelpers.convertHex( selectedColorScheme[i], 20 );
+                        chartOptions.data.datasets[i].borderColor = ftfHelpers.convertHex( selectedColorScheme[i], 40 );
+                        chartOptions.data.datasets[i].hoverBorderColor = ftfHelpers.convertHex( ftfHelpers.pSBC( -0.05, ftfHelpers.invertColor( selectedColorScheme[i] ) ), 40 );
 
-                        selectedColorScheme = ftfHelpers.colorPalettes[chartEl.dataset.colorScheme][Object.keys( ftfHelpers.colorPalettes[chartEl.dataset.colorScheme] ).length - 3];
+                        chartOptions.data.datasets[i].hoverBorderWidth = 4;
+                        chartOptions.data.datasets[i].borderWidth = 4;
                     }
-
-                    chartOptions.data.datasets[i].backgroundColor = selectedColorScheme;
-                    chartOptions.data.datasets[i].hoverBorderColor = selectedColorScheme.map( function( color ){
-                        return ftfHelpers.pSBC( -0.05, ftfHelpers.invertColor( color ) );
-                    } );
-
-                    chartOptions.data.datasets[i].hoverBorderWidth = 4;
-                    chartOptions.data.datasets[i].borderWidth = 4;
                 }
-            }
 
-            chartOptions.options.tooltips = {
-              callbacks: {
-                title: function(tooltipItem, data) {
-                    return data['labels'][tooltipItem[0]['index']];
-                },
-                label: function( tooltipItem, data ) {
-                    return data['datasets'][0]['__custom_meta']['prefix'] + parseInt( data['datasets'][0]['data'][tooltipItem['index']] ).toLocaleString() + data['datasets'][0]['__custom_meta']['suffix'];
-                }
-              }
-            }
-
-            break;
-        case 'radar':
-            for( let i = 0; i < dataRows; i++ ){
-                if ( chartOptions.data && chartOptions.data.datasets[i] ){
-                
-
-                    let selectedColorScheme;
-
-                    if ( ftfHelpers.colorPalettes[chartEl.dataset.colorScheme][dataRows] ){
-                        selectedColorScheme = ftfHelpers.colorPalettes[chartEl.dataset.colorScheme][dataRows];
-                    } else {
-                        selectedColorScheme = ftfHelpers.colorPalettes[chartEl.dataset.colorScheme][Object.keys( ftfHelpers.colorPalettes[chartEl.dataset.colorScheme] ).length - 3];
+                chartOptions.options.tooltips = {
+                  callbacks: {
+                    title: function(tooltipItem, data) {
+                        return data['labels'][tooltipItem[0]['index']];
+                    },
+                    label: function( tooltipItem, data ) {
+                        return data['datasets'][0]['__custom_meta']['prefix'] + parseInt( data['datasets'][0]['data'][tooltipItem['index']] ).toLocaleString() + data['datasets'][0]['__custom_meta']['suffix'];
                     }
-
-                    // chartOptions.data.datasets[i].fill = 'start';
-                    chartOptions.data.datasets[i].backgroundColor = ftfHelpers.convertHex( selectedColorScheme[i], 20 );
-                    chartOptions.data.datasets[i].borderColor = ftfHelpers.convertHex( selectedColorScheme[i], 40 );
-                    chartOptions.data.datasets[i].hoverBorderColor = ftfHelpers.convertHex( ftfHelpers.pSBC( -0.05, ftfHelpers.invertColor( selectedColorScheme[i] ) ), 40 );
-
-                    chartOptions.data.datasets[i].hoverBorderWidth = 4;
-                    chartOptions.data.datasets[i].borderWidth = 4;
+                  }
                 }
-            }
 
-            chartOptions.options.tooltips = {
-              callbacks: {
-                title: function(tooltipItem, data) {
-                    return data['labels'][tooltipItem[0]['index']];
-                },
-                label: function( tooltipItem, data ) {
-                    return data['datasets'][0]['__custom_meta']['prefix'] + parseInt( data['datasets'][0]['data'][tooltipItem['index']] ).toLocaleString() + data['datasets'][0]['__custom_meta']['suffix'];
-                }
-              }
-            }
+                break;
+        }
 
-            break;
+        // console.log( 'rendering chart...', chartEl, chartOptions );
+
     }
-
-    // console.log( 'rendering chart...', chartEl, chartOptions );
-
-    console.log( 'chartEl', chartEl );
 
     if ( ftfHelpers.isMobile() ){
         chartEl.height = chartEl.width;
     }
 
-    let newChart = new Chart( chartEl, chartOptions );
+    if ( chartOptions ){
+        let newChart = new Chart( chartEl, chartOptions );
 
-    if ( !ftfHelpers.isAdmin() ){
-        /* Chart.js accessibility via https://codepen.io/kurkle/pen/WNrwjMp */
+        if ( !ftfHelpers.isAdmin() ){
+            /* Chart.js accessibility via https://codepen.io/kurkle/pen/WNrwjMp */
 
-        let selectedIndex = -1;
-        const meta = newChart.getDatasetMeta( 0 );
+            let selectedIndex = -1;
+            const meta = newChart.getDatasetMeta( 0 );
 
-        function clearActive() {
-            if (selectedIndex > -1) {
-                meta.controller.removeHoverStyle( meta.data[selectedIndex], 0, selectedIndex );
+            function clearActive() {
+                if (selectedIndex > -1) {
+                    meta.controller.removeHoverStyle( meta.data[selectedIndex], 0, selectedIndex );
+                }
             }
-        }
 
-        function activate() {
-            meta.controller.setHoverStyle( meta.data[selectedIndex], 0, selectedIndex );
-            newChart.render();
-        }
+            function activate() {
+                meta.controller.setHoverStyle( meta.data[selectedIndex], 0, selectedIndex );
+                newChart.render();
+            }
 
-        function activateNext() {
-            clearActive();
-            selectedIndex = (selectedIndex + 1) % meta.data.length;
-            activate();
-        }
-
-        function activatePrev() {
-            clearActive();
-            selectedIndex = ( selectedIndex || meta.data.length ) -1;
-            activate();
-        }
-
-        chartEl.addEventListener( 'focus', function(){
-            if (selectedIndex === -1) {
-                activateNext();
-            } else {
+            function activateNext() {
+                clearActive();
+                selectedIndex = (selectedIndex + 1) % meta.data.length;
                 activate();
             }
-        } );
 
-        chartEl.addEventListener( 'blur', function(){
-            clearActive();
-            newChart.render();
-        } );
-
-        chartEl.addEventListener( 'keydown', function( e ) {
-            if ( e.key === 'ArrowRight' ) {
-                activateNext();
-            } else if ( e.key === 'ArrowLeft' ) {
-                activatePrev();
+            function activatePrev() {
+                clearActive();
+                selectedIndex = ( selectedIndex || meta.data.length ) -1;
+                activate();
             }
-        } );
-    }
 
+            chartEl.addEventListener( 'focus', function(){
+                if (selectedIndex === -1) {
+                    activateNext();
+                } else {
+                    activate();
+                }
+            } );
+
+            chartEl.addEventListener( 'blur', function(){
+                clearActive();
+                newChart.render();
+            } );
+
+            chartEl.addEventListener( 'keydown', function( e ) {
+                if ( e.key === 'ArrowRight' ) {
+                    activateNext();
+                } else if ( e.key === 'ArrowLeft' ) {
+                    activatePrev();
+                }
+            } );
+        }
+    }
 }
 
 ftfHelpers.isAdmin = function(){
