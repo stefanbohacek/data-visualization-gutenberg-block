@@ -464,17 +464,21 @@ registerBlockType( 'ftf/dataviz-gutenberg-block', {
                             //     disabled: true
                             // },
                             {
-                                label: 'Configuration file',
+                                label: 'Configuration',
                                 value: 'config'
                             }
                         ] }
                     />
-                    { ( dataSource && dataSource === 'config' ) && <TextareaControl
+                    { ( dataSource && dataSource === 'config' ) && <div>
+                    <TextareaControl
                         label="Configuration object"
                         help="Enter the JSON configuration object for your chart"
                         value={ chartConfigJSON }
                         onChange={ ( chartConfigJSON ) => setState( { chartConfigJSON } ) }
-                    /> }
+                    />
+                    <p>See <a href="https://www.chartjs.org/docs/latest/getting-started/usage.html" target="_blank">chart.js documentation</a>.</p>
+                    </div>
+                    }
                     { ( dataSource && dataSource === 'url' ) && <TextControl
                         label="URL"
                         type="url"

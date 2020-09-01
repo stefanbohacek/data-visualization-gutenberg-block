@@ -720,10 +720,10 @@ Object(_wordpress_blocks__WEBPACK_IMPORTED_MODULE_7__["registerBlockType"])('ftf
           //     disabled: true
           // },
           {
-            label: 'Configuration file',
+            label: 'Configuration',
             value: 'config'
           }]
-        }), dataSource && dataSource === 'config' && Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])(_wordpress_components__WEBPACK_IMPORTED_MODULE_9__["TextareaControl"], {
+        }), dataSource && dataSource === 'config' && Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])("div", null, Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])(_wordpress_components__WEBPACK_IMPORTED_MODULE_9__["TextareaControl"], {
           label: "Configuration object",
           help: "Enter the JSON configuration object for your chart",
           value: chartConfigJSON,
@@ -732,7 +732,10 @@ Object(_wordpress_blocks__WEBPACK_IMPORTED_MODULE_7__["registerBlockType"])('ftf
               chartConfigJSON: chartConfigJSON
             });
           }
-        }), dataSource && dataSource === 'url' && Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])(_wordpress_components__WEBPACK_IMPORTED_MODULE_9__["TextControl"], {
+        }), Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])("p", null, "See ", Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])("a", {
+          href: "https://www.chartjs.org/docs/latest/getting-started/usage.html",
+          target: "_blank"
+        }, "chart.js documentation"), ".")), dataSource && dataSource === 'url' && Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])(_wordpress_components__WEBPACK_IMPORTED_MODULE_9__["TextControl"], {
           label: "URL",
           type: "url",
           value: dataSourceURL,
