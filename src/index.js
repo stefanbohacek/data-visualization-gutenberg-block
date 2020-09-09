@@ -154,6 +154,10 @@ registerBlockType( 'ftf/dataviz-gutenberg-block', {
             type: 'boolean',
             default: false
         },
+        hideYaxisLabels: {
+            type: 'boolean',
+            default: false
+        },
         ignoreNullValues: {
             type: 'boolean',
             default: false
@@ -300,6 +304,7 @@ registerBlockType( 'ftf/dataviz-gutenberg-block', {
                 useLogScale,
                 sortData,
                 columnsAsFilters,
+                hideYaxisLabels,
                 ignoreNullValues,
                 color,
                 colorScheme,
@@ -579,6 +584,14 @@ registerBlockType( 'ftf/dataviz-gutenberg-block', {
                                 />
                             </div>
                         }
+                        <div>
+                            <CheckboxControl
+                                label="Hide Y axis labels"
+                                help="Hide the labels on the Y axis. "
+                                checked={ hideYaxisLabels }
+                                onChange={ ( hideYaxisLabels ) => setState( { hideYaxisLabels } ) }
+                            />
+                        </div>
                         <TextControl
                             label="Prefix"
                             placeholder="$"
@@ -620,6 +633,7 @@ registerBlockType( 'ftf/dataviz-gutenberg-block', {
                     data-log-scale={ useLogScale }
                     data-column-filter={ columnsAsFilters }
                     data-ignore-null={ ignoreNullValues }
+                    data-hide-y-axis-labels={ hideYaxisLabels }
                     data-sort={ sortData }
                     data-limit={ dataLimit }
                     data-prefix={ dataPrefix }

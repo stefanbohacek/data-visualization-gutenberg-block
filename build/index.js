@@ -440,6 +440,10 @@ Object(_wordpress_blocks__WEBPACK_IMPORTED_MODULE_7__["registerBlockType"])('ftf
       type: 'boolean',
       default: false
     },
+    hideYaxisLabels: {
+      type: 'boolean',
+      default: false
+    },
     ignoreNullValues: {
       type: 'boolean',
       default: false
@@ -590,6 +594,7 @@ Object(_wordpress_blocks__WEBPACK_IMPORTED_MODULE_7__["registerBlockType"])('ftf
             useLogScale = _this$props$attribute.useLogScale,
             sortData = _this$props$attribute.sortData,
             columnsAsFilters = _this$props$attribute.columnsAsFilters,
+            hideYaxisLabels = _this$props$attribute.hideYaxisLabels,
             ignoreNullValues = _this$props$attribute.ignoreNullValues,
             color = _this$props$attribute.color,
             colorScheme = _this$props$attribute.colorScheme,
@@ -796,7 +801,16 @@ Object(_wordpress_blocks__WEBPACK_IMPORTED_MODULE_7__["registerBlockType"])('ftf
               dataLimit: dataLimit
             });
           }
-        }),  false && false, Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])(_wordpress_components__WEBPACK_IMPORTED_MODULE_9__["TextControl"], {
+        }),  false && false, Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])("div", null, Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])(_wordpress_components__WEBPACK_IMPORTED_MODULE_9__["CheckboxControl"], {
+          label: "Hide Y axis labels",
+          help: "Hide the labels on the Y axis. ",
+          checked: hideYaxisLabels,
+          onChange: function onChange(hideYaxisLabels) {
+            return setState({
+              hideYaxisLabels: hideYaxisLabels
+            });
+          }
+        })), Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])(_wordpress_components__WEBPACK_IMPORTED_MODULE_9__["TextControl"], {
           label: "Prefix",
           placeholder: "$",
           type: "text",
@@ -840,6 +854,7 @@ Object(_wordpress_blocks__WEBPACK_IMPORTED_MODULE_7__["registerBlockType"])('ftf
           "data-log-scale": useLogScale,
           "data-column-filter": columnsAsFilters,
           "data-ignore-null": ignoreNullValues,
+          "data-hide-y-axis-labels": hideYaxisLabels,
           "data-sort": sortData,
           "data-limit": dataLimit,
           "data-prefix": dataPrefix,

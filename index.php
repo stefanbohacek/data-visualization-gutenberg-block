@@ -560,6 +560,7 @@ SCRIPT;
         $use_log_scale = $attributes['useLogScale'];
         $column_filter = $attributes['columnsAsFilters'] ? 'true' : 'false' ;
         $ignore_null = $attributes['ignoreNullValues'] ? 'true' : 'false' ;
+        $hide_y_axis_labels = $attributes['hideYaxisLabels'] ? 'true' : 'false' ;
 
         $width_restrictions = self::get_dataviz_width_restrictions();
 
@@ -721,6 +722,7 @@ HTML;
                 data-log-scale="{$use_log_scale}"
                 data-column-filter="{$column_filter}"
                 data-ignore-null="{$ignore_null}"
+                data-hide-y-axis-labels={$hide_y_axis_labels}
                 data-sort="{$data_sort}"
                 data-limit="{$data_limit}"
                 data-prefix="{$data_prefix}"
