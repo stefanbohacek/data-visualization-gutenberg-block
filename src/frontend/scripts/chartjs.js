@@ -282,16 +282,6 @@ ftfHelpers.renderChart = function( chartEl ){
 
                 chartOptions.options.responsive = true;
 
-
-                if ( chartEl.dataset.hideYAxisLabels && chartEl.dataset.hideYAxisLabels === 'true' ){
-
-                    chartOptions.options.scales.yAxes.forEach( function( yAx ){
-                        yAx.ticks = { display: false };
-
-                    })
-
-                }
-
                 if ( ftfHelpers.colorPalettes[chartEl.dataset.colorScheme] ){
                     chartOptions.data.datasets.forEach( function( dataset, index ){
                         dataset.hoverBorderWidth = 4;
