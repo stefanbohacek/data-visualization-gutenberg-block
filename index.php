@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Plugin Name: Data Visualization Gutenberg Block
  * Plugin URI: https://github.com/fourtonfish/TBD
@@ -361,6 +360,7 @@ SCRIPT;
     function __construct(){
         add_action( 'init', array( $this, 'register_block' ) );
         add_action( 'init', array( $this, 'enqueue_scripts_and_styles' ) );
+        add_action( 'wp_footer', array( $this, 'add_inline_scripts' ) );        
         // add_action( 'admin_init', array( $this, 'enqueue_scripts_and_styles_admin' ) );
         add_action( 'admin_init', array( $this, 'settings_init' ) );
         add_action( 'admin_menu', array( $this, 'add_settings_page' ) );
@@ -392,7 +392,7 @@ SCRIPT;
             'render_callback' => array( $this, 'render_callback' )
         ) );
 
-       wp_add_inline_script( 'ftf-dataviz', self::$color_palettes );
+        wp_add_inline_script( 'ftf-dataviz', self::$color_palettes );
     }
 
 
@@ -797,7 +797,7 @@ HTML;
             wp_enqueue_style( $style['name'] );
         }
 
-       wp_add_inline_script( $engine_script_name, self::$color_palettes );
+       // wp_add_inline_script( $engine_script_name, self::$color_palettes );
         $css_sr_only = ".sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}";
 
         wp_add_inline_style( 'ftf-dataviz', $css_sr_only );
@@ -823,6 +823,10 @@ HTML;
             wp_register_script( $script['name'], plugin_dir_url( __FILE__ ) . $script['path'], $script['dependencies'], filemtime( $js_file_path ));
             wp_enqueue_script( $script['name'] );
         }
+    }
+
+    function add_inline_scripts(){
+        echo '<script type="text/javascript" >' . self::$color_palettes . '</script>';
     }
 
     function settings_init(){
