@@ -579,6 +579,10 @@ SCRIPT;
 
         $style = '';
 
+        if ( empty( $type ) ){
+            $type = 'bar';
+        }
+
         switch ( $type ) {
             case 'bar':
             case 'line':
