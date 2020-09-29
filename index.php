@@ -359,7 +359,7 @@ SCRIPT;
 
     function __construct(){
         add_action( 'init', array( $this, 'register_block' ) );
-        add_action( 'init', array( $this, 'enqueue_scripts_and_styles' ) );
+        add_action( 'enqueue_block_assets', array( $this, 'enqueue_scripts_and_styles' ) );
         add_action( 'wp_footer', array( $this, 'add_inline_scripts' ) );        
         // add_action( 'admin_init', array( $this, 'enqueue_scripts_and_styles_admin' ) );
         add_action( 'admin_init', array( $this, 'settings_init' ) );
@@ -466,6 +466,8 @@ SCRIPT;
         }
 
         $parsed_data = array(
+            'data_labels_raw' => $data_labels,
+            'data_series_raw' => $data_series_groups,
             'data_labels' => $grouped_data_labels,
             'data_series' => $grouped_data_values,
             'data_labels_sorted' => $chart_labels_sorted,
@@ -480,9 +482,12 @@ SCRIPT;
 
 
     function get_data( $attributes ){
+        $chart_config = htmlspecialchars( $attributes['chartConfigJSON'] );
+        $chart_options = htmlspecialchars( $attributes['chartOptionsJSON'] );
         $source = $attributes['dataSourceFileURL'];
         $source_file_id = $attributes['dataSourceFileID'];
         $color_scheme = $attributes['colorScheme'];
+        $show_gridlines = $attributes['showGridlines'] ? 'true': 'false';
         $data_label = $attributes['label'];
         $data_sort = $attributes['sortData'];
         $data_filter = $attributes['columnsAsFilters'];
@@ -539,14 +544,16 @@ SCRIPT;
     }
 
     function render_callback( $attributes, $content ){
+        $chart_config = htmlspecialchars( $attributes['chartConfigJSON'] );
+        $chart_options = htmlspecialchars( $attributes['chartOptionsJSON'] );
         $source_url = $attributes['dataSourceFileURL'];
-
         $source = $attributes['dataSourceFileURL'];
         $source_file_id = $attributes['dataSourceFileID'];
         $color_scheme = $attributes['colorScheme'];
         $data_label = $attributes['label'];
-        $data_sort = $attributes['sortData'] ? 'true' : 'false' ;
-        $data_filter = $attributes['columnsAsFilters'] ? 'true' : 'false' ;
+        $data_sort = $attributes['sortData'] ? 'true' : 'false';
+        $data_filter = $attributes['columnsAsFilters'] ? 'true' : 'false';
+        $show_gridlines = isset( $attributes['showGridlines'] ) ? $attributes['showGridlines'] : 'true';
         $data_limit = $attributes['dataLimit'];
         $data_prefix = $attributes['dataPrefix'];
         $data_suffix = $attributes['dataSuffix'];
@@ -558,8 +565,8 @@ SCRIPT;
         }
 
         $use_log_scale = $attributes['useLogScale'];
-        $column_filter = $attributes['columnsAsFilters'] ? 'true' : 'false' ;
-        $ignore_null = $attributes['ignoreNullValues'] ? 'true' : 'false' ;
+        $column_filter = $attributes['columnsAsFilters'] ? 'true' : 'false';
+        $ignore_null = $attributes['ignoreNullValues'] ? 'true' : 'false';
 
         $width_restrictions = self::get_dataviz_width_restrictions();
 
@@ -586,6 +593,8 @@ SCRIPT;
         switch ( $type ) {
             case 'bar':
             case 'line':
+            case 'scatter':
+            case 'scatter-dates':
                 switch ( $size ) {
                     case 'small':
                         $width_height = 'width="500" height="400"';
@@ -706,12 +715,19 @@ HTML;
 
         $table_html .= '</tbody></table>';
         $table_html_visible = str_replace( 'sr-only', '', $table_html );
+        $canvas_html = '';
 
+        if ( !empty( $source_file_id ) ){
         $canvas_html = <<<HTML
             <script type="text/javascript">
                 window.ftfDataviz = window.ftfDataviz || {};
                 window.ftfDataviz[{$source_file_id}] = {$data_json}
             </script>
+HTML;
+
+        }
+
+        $canvas_html .= <<<HTML
             <canvas
                 tabIndex="0"
                 class="ftf-dataviz-chart chart {$attributes['className']}"
@@ -719,6 +735,8 @@ HTML;
                 style="{$style} margin: 1.5rem auto;"
                 role="img"
                 aria-label="{$data_label}"
+                data-config="{$chart_config}"
+                data-options="{$chart_options}"
                 data-size="{$size}"
                 data-source-id="{$source_file_id}"
                 data-label="{$data_label}"
@@ -731,6 +749,7 @@ HTML;
                 data-suffix="{$data_suffix}"
                 data-axis-label-data="{$axis_label_data}"
                 data-color-scheme="{$color_scheme}"
+                data-show-gridlines="{$show_gridlines}"
                 data-type="{$type}"
             ></canvas>
             {$table_html}
@@ -747,65 +766,72 @@ HTML;
     }
 
     function enqueue_scripts_and_styles(){
-        $scripts = array(
-            array(
-                'name' => 'chartjs',
-                'path' => 'libs/chart.js/chart.min.js',
-                'dependencies' => array()
-            ),
-            // array(
-            //     'name' => 'ftf-dataviz-frontend',
-            //     'path' => 'dist/js/scripts.min.js',
-            //     'dependencies' => array( 'chartjs' )
-            // )            
-        );
+        if ( has_block( 'ftf/dataviz-gutenberg-block' ) ) {
+            $scripts = array(
+                array(
+                    'name' => 'chartjs',
+                    'path' => 'libs/chart.js/chart.min.js',
+                    'dependencies' => array( 'momentjs' )
+                ),
+                array(
+                    'name' => 'momentjs',
+                    'path' => 'libs/moment.js/moment.min.js',
+                    'dependencies' => array()
+                ),
+                // array(
+                //     'name' => 'ftf-dataviz-frontend',
+                //     'path' => 'dist/js/scripts.min.js',
+                //     'dependencies' => array( 'chartjs' )
+                // )            
+            );
 
-        $rendering_engine = get_option( 'ftf_dataviz_gutenberg_block_rendering_engine', 'chart.js' );
-        $engine_script_name = 'ftf-dataviz-' . $rendering_engine;
-        $width_restrictions = self::get_dataviz_width_restrictions();
+            $rendering_engine = get_option( 'ftf_dataviz_gutenberg_block_rendering_engine', 'chart.js' );
+            $engine_script_name = 'ftf-dataviz-' . $rendering_engine;
+            $width_restrictions = self::get_dataviz_width_restrictions();
 
-        switch ( $rendering_engine ) {
-            case 'chart.js':
-                $engine_script_name = 'ftf-dataviz-chart.js';
+            switch ( $rendering_engine ) {
+                case 'chart.js':
+                    $engine_script_name = 'ftf-dataviz-chart.js';
 
-                array_push( $scripts, array(
-                    'name' => $engine_script_name,
-                    'path' => 'dist/js/chartjs.min.js',
-                    'dependencies' => array( 'chartjs' )
-                ) );
-                break;
+                    array_push( $scripts, array(
+                        'name' => $engine_script_name,
+                        'path' => 'dist/js/chartjs.min.js',
+                        'dependencies' => array( 'chartjs' )
+                    ) );
+                    break;
+            }
+
+            $styles = array(
+                array(
+                    'name' => 'ftf-dataviz',
+                    'path' => 'dist/css/styles.min.css',
+                    'dependencies' => array()
+                ),
+                array(
+                    'name' => 'chartjs',
+                    'path' => 'libs/chart.js/chart.min.css',
+                    'dependencies' => array()
+                )
+            );
+
+            foreach ( $scripts as $script ) {
+                $js_file_path = plugin_dir_path( __FILE__ ) . $script['path'];
+                wp_register_script( $script['name'], plugin_dir_url( __FILE__ ) . $script['path'], $script['dependencies'], filemtime( $js_file_path ));
+                wp_enqueue_script( $script['name'] );
+            }
+
+            foreach ( $styles as $style ) {
+                $css_file_path = plugin_dir_path( __FILE__ ) . $style['path'];
+                wp_register_style( $style['name'], plugin_dir_url( __FILE__ ) . $style['path'], $style['dependencies'], filemtime( $css_file_path ), 'all' );
+                wp_enqueue_style( $style['name'] );
+            }
+
+           // wp_add_inline_script( $engine_script_name, self::$color_palettes );
+            $css_sr_only = ".sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}";
+
+            wp_add_inline_style( 'ftf-dataviz', $css_sr_only );
+
         }
-
-        $styles = array(
-            array(
-                'name' => 'ftf-dataviz',
-                'path' => 'dist/css/styles.min.css',
-                'dependencies' => array()
-            ),
-            array(
-                'name' => 'chartjs',
-                'path' => 'libs/chart.js/chart.min.css',
-                'dependencies' => array()
-            )
-        );
-
-        foreach ( $scripts as $script ) {
-            $js_file_path = plugin_dir_path( __FILE__ ) . $script['path'];
-            wp_register_script( $script['name'], plugin_dir_url( __FILE__ ) . $script['path'], $script['dependencies'], filemtime( $js_file_path ));
-            wp_enqueue_script( $script['name'] );
-        }
-
-        foreach ( $styles as $style ) {
-            $css_file_path = plugin_dir_path( __FILE__ ) . $style['path'];
-            wp_register_style( $style['name'], plugin_dir_url( __FILE__ ) . $style['path'], $style['dependencies'], filemtime( $css_file_path ), 'all' );
-            wp_enqueue_style( $style['name'] );
-        }
-
-       // wp_add_inline_script( $engine_script_name, self::$color_palettes );
-        $css_sr_only = ".sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}";
-
-        wp_add_inline_style( 'ftf-dataviz', $css_sr_only );
-
     }
 
     function enqueue_scripts_and_styles_admin(){

@@ -456,7 +456,15 @@ Object(_wordpress_blocks__WEBPACK_IMPORTED_MODULE_7__["registerBlockType"])('ftf
       type: 'string',
       default: ''
     },
+    showGridlines: {
+      type: 'boolean',
+      default: true
+    },
     chartConfigJSON: {
+      type: 'string',
+      default: ''
+    },
+    chartOptionsJSON: {
       type: 'string',
       default: ''
     }
@@ -593,7 +601,9 @@ Object(_wordpress_blocks__WEBPACK_IMPORTED_MODULE_7__["registerBlockType"])('ftf
             ignoreNullValues = _this$props$attribute.ignoreNullValues,
             color = _this$props$attribute.color,
             colorScheme = _this$props$attribute.colorScheme,
+            showGridlines = _this$props$attribute.showGridlines,
             chartConfigJSON = _this$props$attribute.chartConfigJSON,
+            chartOptionsJSON = _this$props$attribute.chartOptionsJSON,
             content = _this$props$attribute.content,
             setAttributes = _this$props.setAttributes,
             className = _this$props.className;
@@ -638,6 +648,12 @@ Object(_wordpress_blocks__WEBPACK_IMPORTED_MODULE_7__["registerBlockType"])('ftf
             label: 'Line chart',
             value: 'line'
           }, {
+            label: 'Scatter chart',
+            value: 'scatter'
+          }, {
+            label: 'Scatter chart with dates',
+            value: 'scatter-dates'
+          }, {
             label: 'Pie chart',
             value: 'pie'
           }, {
@@ -652,8 +668,11 @@ Object(_wordpress_blocks__WEBPACK_IMPORTED_MODULE_7__["registerBlockType"])('ftf
           }, {
             label: 'Table',
             value: 'table'
-          }]
-        }), dataSource !== 'config' && ['line', 'bar', 'horizontalBar', 'pie', 'doughnut', 'polarArea', 'radar'].indexOf(vizType) !== -1 && Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])("div", null, Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])(_wordpress_components__WEBPACK_IMPORTED_MODULE_9__["SelectControl"], {
+          }],
+          help: {
+            'scatter-dates': 'Date should be in the second column of your dataset.'
+          }[vizType]
+        }), Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])("div", null, dataSource !== 'config' && Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])(_wordpress_components__WEBPACK_IMPORTED_MODULE_9__["SelectControl"], {
           label: "Color scheme (Palette size)",
           value: colorScheme,
           onChange: function onChange(colorScheme) {
@@ -674,7 +693,15 @@ Object(_wordpress_blocks__WEBPACK_IMPORTED_MODULE_7__["registerBlockType"])('ftf
         }), Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])("p", null, "Via ", Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])("a", {
           href: "https://colorbrewer2.org/",
           target: "_blank"
-        }, "colorbrewer2.org"), "."))), dataSource !== 'config' && Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])(_wordpress_components__WEBPACK_IMPORTED_MODULE_9__["SelectControl"], {
+        }, "colorbrewer2.org"), "."))), ['line', 'bar', 'horizontalBar', 'scatter', 'scatter-dates'].indexOf(vizType) !== -1 && Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])("div", null, Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])(_wordpress_components__WEBPACK_IMPORTED_MODULE_9__["CheckboxControl"], {
+          label: "Show gridlines",
+          checked: showGridlines,
+          onChange: function onChange(showGridlines) {
+            return setState({
+              showGridlines: showGridlines
+            });
+          }
+        })), dataSource !== 'config' && Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])(_wordpress_components__WEBPACK_IMPORTED_MODULE_9__["SelectControl"], {
           label: "Size",
           value: vizSize,
           onChange: function onChange(vizSize) {
@@ -725,7 +752,7 @@ Object(_wordpress_blocks__WEBPACK_IMPORTED_MODULE_7__["registerBlockType"])('ftf
           }]
         }), dataSource && dataSource === 'config' && Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])("div", null, Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])(_wordpress_components__WEBPACK_IMPORTED_MODULE_9__["TextareaControl"], {
           label: "Configuration object",
-          help: "Enter the JSON configuration object for your chart",
+          help: "Enter the configuration object for your chart",
           value: chartConfigJSON,
           onChange: function onChange(chartConfigJSON) {
             return setState({
@@ -768,8 +795,7 @@ Object(_wordpress_blocks__WEBPACK_IMPORTED_MODULE_7__["registerBlockType"])('ftf
             }, "Select data file"));
           }
         }), dataSource && dataSource !== 'config' && (dataSourceURL || dataSourceFileID) && Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])("div", null, Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])("div", null, Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])(_wordpress_components__WEBPACK_IMPORTED_MODULE_9__["CheckboxControl"], {
-          label: "Ignore empty and zero values",
-          help: "Hide columns with missing data or zero values.",
+          label: "Hide columns with null values",
           checked: ignoreNullValues,
           onChange: function onChange(ignoreNullValues) {
             return setState({
@@ -777,8 +803,7 @@ Object(_wordpress_blocks__WEBPACK_IMPORTED_MODULE_7__["registerBlockType"])('ftf
             });
           }
         })), Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])("div", null, Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])(_wordpress_components__WEBPACK_IMPORTED_MODULE_9__["CheckboxControl"], {
-          label: "Sort",
-          help: "Sort data by values in the first column.",
+          label: "Sort by values in first column",
           checked: sortData,
           onChange: function onChange(sortData) {
             return setState({
@@ -797,10 +822,9 @@ Object(_wordpress_blocks__WEBPACK_IMPORTED_MODULE_7__["registerBlockType"])('ftf
             });
           }
         }),  false && false, Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])(_wordpress_components__WEBPACK_IMPORTED_MODULE_9__["TextControl"], {
-          label: "Prefix",
+          label: "Add prefix before value",
           placeholder: "$",
           type: "text",
-          help: "Add optional prefix before data value, for example $.",
           value: dataPrefix,
           onChange: function onChange(dataPrefix) {
             return setState({
@@ -808,17 +832,16 @@ Object(_wordpress_blocks__WEBPACK_IMPORTED_MODULE_7__["registerBlockType"])('ftf
             });
           }
         }), Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])(_wordpress_components__WEBPACK_IMPORTED_MODULE_9__["TextControl"], {
-          label: "Suffix",
+          label: "Add suffix after value",
           placeholder: "%",
           type: "text",
-          help: "Add optional suffix after data value, for example %.",
           value: dataSuffix,
           onChange: function onChange(dataSuffix) {
             return setState({
               dataSuffix: dataSuffix
             });
           }
-        })), dataSource !== 'config' && ['line', 'bar', 'horizontalBar'].indexOf(vizType) !== -1 && Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])("div", null, Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])(_wordpress_components__WEBPACK_IMPORTED_MODULE_9__["CheckboxControl"], {
+        })), dataSource !== 'config' && ['line', 'bar', 'horizontalBar', 'scatter', 'scatter-dates'].indexOf(vizType) !== -1 && Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])("div", null, Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])(_wordpress_components__WEBPACK_IMPORTED_MODULE_9__["CheckboxControl"], {
           label: "Use logarithmic scale",
           help: "Useful for datasets with a wide range of values.",
           checked: useLogScale,
@@ -827,11 +850,23 @@ Object(_wordpress_blocks__WEBPACK_IMPORTED_MODULE_7__["registerBlockType"])('ftf
               useLogScale: useLogScale
             });
           }
-        })))), Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])("div", null, (!dataSource || dataSource === 'config' && !chartConfigJSON || dataSource === 'file' && !dataSourceFileID) && Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])(_wordpress_components__WEBPACK_IMPORTED_MODULE_9__["Placeholder"], {
+        })), dataSource !== 'config' && Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])("div", null, Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])(_wordpress_components__WEBPACK_IMPORTED_MODULE_9__["TextareaControl"], {
+          label: "Custom options",
+          help: "Add custom options for your chart",
+          value: chartOptionsJSON,
+          onChange: function onChange(chartOptionsJSON) {
+            return setState({
+              chartOptionsJSON: chartOptionsJSON
+            });
+          }
+        }), Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])("p", null, "See ", Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])("a", {
+          href: "https://www.chartjs.org/docs/latest/getting-started/usage.html",
+          target: "_blank"
+        }, "chart.js documentation"), ".")))), Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])("div", null, (!dataSource || dataSource === 'config' && !chartConfigJSON || dataSource === 'file' && !dataSourceFileID) && Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])(_wordpress_components__WEBPACK_IMPORTED_MODULE_9__["Placeholder"], {
           icon: "chart-pie",
           label: "Data Visualization",
           instructions: ""
-        }), dataSource === 'file' && dataSourceFileID && ['line', 'bar', 'horizontalBar', 'pie', 'doughnut', 'polarArea', 'radar'].indexOf(vizType) !== -1 && Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])("canvas", {
+        }), dataSource === 'file' && dataSourceFileID && ['line', 'bar', 'horizontalBar', 'pie', 'doughnut', 'polarArea', 'radar', 'scatter', 'scatter-dates'].indexOf(vizType) !== -1 && Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])("canvas", {
           class: "ftf-dataviz-chart chart",
           role: "img",
           "aria-label": label,
@@ -846,7 +881,9 @@ Object(_wordpress_blocks__WEBPACK_IMPORTED_MODULE_7__["registerBlockType"])('ftf
           "data-suffix": dataSuffix,
           "data-axis-label-data": label,
           "data-color-scheme": colorScheme,
-          "data-type": vizType
+          "data-show-gridlines": showGridlines,
+          "data-type": vizType,
+          "data-options": chartOptionsJSON
         }), dataSource === 'config' && chartConfigJSON && Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])("canvas", {
           class: "ftf-dataviz-chart chart",
           role: "img",

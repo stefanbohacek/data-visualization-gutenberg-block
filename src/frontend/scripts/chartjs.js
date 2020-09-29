@@ -60,6 +60,9 @@ ftfHelpers.pSBC = function(p,c0,c1,l){
 }
 
 ftfHelpers.invertColor = function( hex, bw ) {
+    if ( !hex ){
+        return null;
+    }
     if ( hex.indexOf( '#' ) === 0 ) {
         hex = hex.slice( 1 );
     }
@@ -98,20 +101,30 @@ ftfHelpers.renderChart = function( chartEl ){
 
     if ( chartEl.dataset.config ){
         try{
-            chartOptions = JSON.parse( chartEl.dataset.config );
-        } catch( err ){ /* noop */ }
+            // chartOptions = JSON.parse( chartEl.dataset.config );
+            chartOptions = eval( '(' + chartEl.dataset.config + ')' );
+        } catch( err ){ console.log( err ) /* noop */ }
     } else{
         let colorSchemeIndex = 3;
         let datavizType = chartEl.dataset.type || 'bar';
 
         let chartLabels, chartData;
-
-        if ( chartEl.dataset.sort && chartEl.dataset.sort === 'true' ){
-            chartLabels = JSON.parse( JSON.stringify( window.ftfDataviz[parseInt( chartEl.dataset.sourceId )].data_labels_sorted ) );
-            chartData = JSON.parse( JSON.stringify( window.ftfDataviz[parseInt( chartEl.dataset.sourceId )].data_series_sorted ) );
-        } else {
-            chartLabels = JSON.parse( JSON.stringify( window.ftfDataviz[parseInt( chartEl.dataset.sourceId )].data_labels ) );
-            chartData = JSON.parse( JSON.stringify( window.ftfDataviz[parseInt( chartEl.dataset.sourceId )].data_series ) );
+        if ( chartEl.dataset.sourceId ){
+            if ( datavizType === 'scatter' ){
+                chartLabels = JSON.parse( JSON.stringify( window.ftfDataviz[parseInt( chartEl.dataset.sourceId )].data_labels_raw ) );
+                chartData = JSON.parse( JSON.stringify( window.ftfDataviz[parseInt( chartEl.dataset.sourceId )].data_series_raw ) );
+            }
+            else if ( datavizType === 'scatter-dates' ){
+                chartData = JSON.parse( JSON.stringify( window.ftfDataviz[parseInt( chartEl.dataset.sourceId )].data_labels_raw ) );
+                chartLabels = JSON.parse( JSON.stringify( window.ftfDataviz[parseInt( chartEl.dataset.sourceId )].data_series_raw ) );
+            }
+            else if ( chartEl.dataset.sort && chartEl.dataset.sort === 'true' ){
+                chartLabels = JSON.parse( JSON.stringify( window.ftfDataviz[parseInt( chartEl.dataset.sourceId )].data_labels_sorted ) );
+                chartData = JSON.parse( JSON.stringify( window.ftfDataviz[parseInt( chartEl.dataset.sourceId )].data_series_sorted ) );
+            } else {
+                chartLabels = JSON.parse( JSON.stringify( window.ftfDataviz[parseInt( chartEl.dataset.sourceId )].data_labels ) );
+                chartData = JSON.parse( JSON.stringify( window.ftfDataviz[parseInt( chartEl.dataset.sourceId )].data_series ) );
+            }            
         }
 
         if ( chartEl.dataset.ignoreNull && chartEl.dataset.ignoreNull === 'true' ){
@@ -141,11 +154,11 @@ ftfHelpers.renderChart = function( chartEl ){
             chartData = chartData.slice( 0, chartEl.dataset.limit );
         }
 
-        if ( chartData.length > 3 ){
+        if ( chartData && chartData.length > 3 ){
             colorSchemeIndex = chartData.length;
         }
 
-        const dataRows = chartData[0].length;
+        const dataRows = chartData ? chartData[0].length : 0;
         let datasets = [];
 
         for( let i = 0; i < dataRows; i++ ){
@@ -153,7 +166,9 @@ ftfHelpers.renderChart = function( chartEl ){
             let label = '';
 
             chartData.forEach( function( data, index ){
-                label = window.ftfDataviz[parseInt( chartEl.dataset.sourceId )].axis_label_values[i];
+                if ( chartEl.dataset.sourceId ){
+                    label = window.ftfDataviz[parseInt( chartEl.dataset.sourceId )].axis_label_values[i];                    
+                }
 
                 // const label = chartData[i][index];
                 dataArray.push( chartData[index][i] );
@@ -168,13 +183,16 @@ ftfHelpers.renderChart = function( chartEl ){
                 }
             };
 
-            if ( chartEl.dataset.colorScheme && ftfHelpers.colorPalettes[chartEl.dataset.colorScheme] ){
-                if ( [ 'bar', 'horizontalBar' ].indexOf( datavizType ) !== -1 ){
-                    dataset.backgroundColor = ftfHelpers.colorPalettes[chartEl.dataset.colorScheme][dataRows+3][i];
-                } else if ( datavizType === 'line' ){
-                    dataset.borderColor = ftfHelpers.colorPalettes[chartEl.dataset.colorScheme][dataRows+3][i];
-                    dataset.fill = false;
+            if ( chartEl.dataset.colorScheme ){
+                if ( chartEl.dataset.colorScheme && ftfHelpers.colorPalettes[chartEl.dataset.colorScheme] ){
+                    if ( [ 'bar', 'horizontalBar' ].indexOf( datavizType ) !== -1 ){
+                        dataset.backgroundColor = ftfHelpers.colorPalettes[chartEl.dataset.colorScheme][dataRows+3][i];
+                    } else if ( datavizType === 'line' ){
+                        dataset.borderColor = ftfHelpers.colorPalettes[chartEl.dataset.colorScheme][dataRows+3][i];
+                        dataset.fill = false;
+                    }
                 }
+
             }
 
             datasets.push( dataset );
@@ -205,15 +223,17 @@ ftfHelpers.renderChart = function( chartEl ){
             options: {}
         };
 
+        let axesLabels, axesValues;
+
         switch ( datavizType ){
             case 'horizontalBar':
             case 'bar':
             case 'line':
-                const axesLabels = [{
+                axesLabels = [{
                     scaleLabel: {
                         display: true,
                         // labelString: chartEl.dataset.axisLabelData
-                        labelString: window.ftfDataviz[parseInt( chartEl.dataset.sourceId )].axis_label_title
+                        labelString: chartEl.dataset.sourceId ? window.ftfDataviz[parseInt( chartEl.dataset.sourceId )].axis_label_title : ''
                     },
                     ticks: {
                         beginAtZero: true,
@@ -223,7 +243,7 @@ ftfHelpers.renderChart = function( chartEl ){
                     }
                 }];
 
-                const axesValues = [{
+                axesValues = [{
                     scaleLabel: {
                         display: true,
                         labelString: chartEl.dataset.label
@@ -282,7 +302,7 @@ ftfHelpers.renderChart = function( chartEl ){
 
                 chartOptions.options.responsive = true;
 
-                if ( ftfHelpers.colorPalettes[chartEl.dataset.colorScheme] ){
+                if ( chartEl.dataset.colorScheme && ftfHelpers.colorPalettes[chartEl.dataset.colorScheme] ){
                     chartOptions.data.datasets.forEach( function( dataset, index ){
                         dataset.hoverBorderWidth = 4;
                         dataset.hoverBorderColor = ftfHelpers.pSBC( -0.05, ftfHelpers.invertColor( ftfHelpers.colorPalettes[chartEl.dataset.colorScheme][dataRows+3][index] ) );
@@ -299,20 +319,21 @@ ftfHelpers.renderChart = function( chartEl ){
                     if ( chartOptions.data && chartOptions.data.datasets[i] ){
                         let selectedColorScheme;
 
-                        if ( ftfHelpers.colorPalettes[chartEl.dataset.colorScheme][chartLabels.length] ){
-                            selectedColorScheme = ftfHelpers.colorPalettes[chartEl.dataset.colorScheme][chartLabels.length];
-                        } else {
+                        if ( chartEl.dataset.colorScheme ){
+                            if ( ftfHelpers.colorPalettes[chartEl.dataset.colorScheme][chartLabels.length] ){
+                                selectedColorScheme = ftfHelpers.colorPalettes[chartEl.dataset.colorScheme][chartLabels.length];
+                            } else {
+                                selectedColorScheme = ftfHelpers.colorPalettes[chartEl.dataset.colorScheme][Object.keys( ftfHelpers.colorPalettes[chartEl.dataset.colorScheme] ).length - 3];
+                            }
 
-                            selectedColorScheme = ftfHelpers.colorPalettes[chartEl.dataset.colorScheme][Object.keys( ftfHelpers.colorPalettes[chartEl.dataset.colorScheme] ).length - 3];
+                            chartOptions.data.datasets[i].backgroundColor = selectedColorScheme;
+                            chartOptions.data.datasets[i].hoverBorderColor = selectedColorScheme.map( function( color ){
+                                return ftfHelpers.pSBC( -0.05, ftfHelpers.invertColor( color ) );
+                            } );
+
+                            chartOptions.data.datasets[i].hoverBorderWidth = 4;
+                            chartOptions.data.datasets[i].borderWidth = 4;
                         }
-
-                        chartOptions.data.datasets[i].backgroundColor = selectedColorScheme;
-                        chartOptions.data.datasets[i].hoverBorderColor = selectedColorScheme.map( function( color ){
-                            return ftfHelpers.pSBC( -0.05, ftfHelpers.invertColor( color ) );
-                        } );
-
-                        chartOptions.data.datasets[i].hoverBorderWidth = 4;
-                        chartOptions.data.datasets[i].borderWidth = 4;
                     }
                 }
 
@@ -335,19 +356,20 @@ ftfHelpers.renderChart = function( chartEl ){
 
                         let selectedColorScheme;
 
-                        if ( ftfHelpers.colorPalettes[chartEl.dataset.colorScheme][dataRows] ){
-                            selectedColorScheme = ftfHelpers.colorPalettes[chartEl.dataset.colorScheme][dataRows];
-                        } else {
-                            selectedColorScheme = ftfHelpers.colorPalettes[chartEl.dataset.colorScheme][Object.keys( ftfHelpers.colorPalettes[chartEl.dataset.colorScheme] ).length - 3];
+                        if ( chartEl.dataset.colorScheme ){
+                            if ( ftfHelpers.colorPalettes[chartEl.dataset.colorScheme][dataRows] ){
+                                selectedColorScheme = ftfHelpers.colorPalettes[chartEl.dataset.colorScheme][dataRows];
+                            } else {
+                                selectedColorScheme = ftfHelpers.colorPalettes[chartEl.dataset.colorScheme][Object.keys( ftfHelpers.colorPalettes[chartEl.dataset.colorScheme] ).length - 3];
+                            }                        
+                            // chartOptions.data.datasets[i].fill = 'start';
+                            chartOptions.data.datasets[i].backgroundColor = ftfHelpers.convertHex( selectedColorScheme[i], 20 );
+                            chartOptions.data.datasets[i].borderColor = ftfHelpers.convertHex( selectedColorScheme[i], 40 );
+                            chartOptions.data.datasets[i].hoverBorderColor = ftfHelpers.convertHex( ftfHelpers.pSBC( -0.05, ftfHelpers.invertColor( selectedColorScheme[i] ) ), 40 );
+
+                            chartOptions.data.datasets[i].hoverBorderWidth = 4;
+                            chartOptions.data.datasets[i].borderWidth = 4;
                         }
-
-                        // chartOptions.data.datasets[i].fill = 'start';
-                        chartOptions.data.datasets[i].backgroundColor = ftfHelpers.convertHex( selectedColorScheme[i], 20 );
-                        chartOptions.data.datasets[i].borderColor = ftfHelpers.convertHex( selectedColorScheme[i], 40 );
-                        chartOptions.data.datasets[i].hoverBorderColor = ftfHelpers.convertHex( ftfHelpers.pSBC( -0.05, ftfHelpers.invertColor( selectedColorScheme[i] ) ), 40 );
-
-                        chartOptions.data.datasets[i].hoverBorderWidth = 4;
-                        chartOptions.data.datasets[i].borderWidth = 4;
                     }
                 }
 
@@ -363,10 +385,165 @@ ftfHelpers.renderChart = function( chartEl ){
                 }
 
                 break;
+            case 'scatter':
+            case 'scatter-dates':
+                const labelX = chartEl.dataset.sourceId ? window.ftfDataviz[parseInt( chartEl.dataset.sourceId )].axis_label_title : '',
+                      labelY = chartOptions.data.datasets[0].label;
+
+                let selectedColorScheme;
+
+                if ( chartEl.dataset.colorScheme && chartOptions.data.datasets[0] ){
+                    if ( ftfHelpers.colorPalettes[chartEl.dataset.colorScheme][dataRows] ){
+                        selectedColorScheme = ftfHelpers.colorPalettes[chartEl.dataset.colorScheme][dataRows];
+                    } else {
+                        selectedColorScheme = ftfHelpers.colorPalettes[chartEl.dataset.colorScheme][Object.keys( ftfHelpers.colorPalettes[chartEl.dataset.colorScheme] ).length - 3];
+                    }
+
+
+                    chartOptions.data.datasets[0].backgroundColor = ftfHelpers.convertHex( selectedColorScheme[0], 20 );
+                    chartOptions.data.datasets[0].borderColor = ftfHelpers.convertHex( selectedColorScheme[0], 40 );
+                    chartOptions.data.datasets[0].hoverBorderColor = ftfHelpers.convertHex( ftfHelpers.pSBC( -0.05, ftfHelpers.invertColor( selectedColorScheme[0] ) ), 40 );
+                }
+
+                chartOptions.data.datasets[0].hoverBorderWidth = 4;
+                chartOptions.data.datasets[0].borderWidth = 4;
+
+                axesLabels = [{
+                    scaleLabel: {
+                        display: true,
+                        // labelString: chartEl.dataset.axisLabelData
+                        labelString: chartEl.dataset.sourceId ? window.ftfDataviz[parseInt( chartEl.dataset.sourceId )].axis_label_title : ''
+                    },
+                    ticks: {
+                        // max: 3,
+                        // beginAtZero: true,
+                        // userCallback: function( value, index, values)  {
+                        //     return value.toLocaleString();
+                        // }
+                    }
+                }];
+
+                axesValues = [{
+                    scaleLabel: {
+                        display: true,
+                        labelString: labelY
+                    },
+                    type: chartEl.dataset.logScale ? 'logarithmic' : 'linear',
+                    ticks: {
+                        // beginAtZero: true,
+                        userCallback: function( value, index, values)  {
+                            return chartEl.dataset.prefix + value.toLocaleString() + chartEl.dataset.suffix;
+                        }
+                    }
+                }];   
+                
+                chartOptions.options.scales = {
+                    xAxes: axesValues,
+                    yAxes: axesLabels
+                };  
+
+                let datapoints = [];
+                chartOptions.data.labels.forEach( function( dataset, i ){
+
+                    let datapoint = { x: null, y: null };
+
+                    if ( datavizType === 'scatter-dates' ){
+                        chartOptions.type = 'scatter';
+                        chartOptions.options.scales = {
+                            'xAxes': [
+                                {
+                                   'type': 'time',
+                                   'position': 'bottom',
+                                   'ticks': {
+                                        beginAtZero: false,
+                                        stepSize: 10,
+
+                                        callback: (value) => {
+                                          return new Date( value ).toLocaleDateString( navigator.language, { month: 'long', year: 'numeric' } );
+                                        },
+                                    }
+                                }
+                            ],
+                            yAxes: [
+                                {
+                                    ticks: {
+                                        beginAtZero: false,
+                                        display: false
+                                    },
+                                    scaleLabel: {
+                                        display: false,
+                                        // labelString: chartEl.dataset.axisLabelData
+                                        // labelString: chartEl.dataset.sourceId ? window.ftfDataviz[parseInt( chartEl.dataset.sourceId )].axis_label_title : ''
+                                        // labelString: 'Day of the month'
+                                    },
+                                    minorTickInterval: null
+                                }
+                            ]
+                        };
+
+                        chartOptions.options.legend = {
+                            display: false
+                        };
+
+                        const d = new Date( chartOptions.data.labels[i] );
+                        datapoint.x = d;
+
+                        // Day of the month
+                        datapoint.y = d.getDate();
+
+                        // datapoint.y = i;
+                        // datapoint.y = 0;
+
+                    } else {
+                        datapoint.x = parseFloat( chartOptions.data.labels[i] );
+                        datapoint.y = parseFloat( chartOptions.data.datasets[0].data[i] );
+                    }
+
+                    datapoints.push( datapoint );
+                } );
+                chartOptions.data.datasets[0].data = datapoints;
+                chartOptions.data.datasets = [chartOptions.data.datasets[0]];
+                chartOptions.options.tooltips = {
+                  callbacks: {
+                    title: function(tooltipItem, data) {
+                      return new Date( data['labels'][tooltipItem[0]['index']] ).toLocaleDateString( navigator.language, { day: 'numeric', month: 'long', year: 'numeric' } );
+
+                    },
+                    label: function( tooltipItem, data ) {
+                        return chartEl.dataset.prefix + window.ftfDataviz[parseInt( chartEl.dataset.sourceId )].data_labels_raw[tooltipItem['index']] + chartEl.dataset.suffix;
+                    }
+                  }
+                }                
+                break;
         }
 
-        // console.log( 'rendering chart...', chartEl, chartOptions );
+    }
 
+    if ( !chartEl.dataset.showGridlines || chartEl.dataset.showGridlines.toString() === 'false' ){
+        chartOptions.options.scales = chartOptions.options.scales  || {};
+        chartOptions.options.scales.xAxes = chartOptions.options.scales.xAxes  || [];
+        chartOptions.options.scales.yAxes = chartOptions.options.scales.yAxes  || [];
+
+        chartOptions.options.scales.xAxes.forEach( function( xAxis ){
+            xAxis.gridLines = {
+            display: true,
+            drawBorder: true,
+            drawOnChartArea: false,
+            };
+        } );
+
+        chartOptions.options.scales.yAxes.forEach( function( yAxis ){
+            yAxis.gridLines = {
+            display: true,
+            drawBorder: true,
+            drawOnChartArea: false,
+            };
+        } );
+    }
+    if ( chartEl.dataset.options ){
+        try{
+            chartOptions.options = eval( '(' + chartEl.dataset.options + ')' );
+        } catch( err ){ console.log( err ) /* noop */ }
     }
 
     if ( ftfHelpers.isMobile() ){
@@ -374,6 +551,9 @@ ftfHelpers.renderChart = function( chartEl ){
     }
 
     if ( chartOptions ){
+        console.log( 'rendering chart...', chartEl, chartOptions );
+        // console.log( 'data', chartOptions.data.datasets );
+
         let newChart = new Chart( chartEl, chartOptions );
 
         if ( !ftfHelpers.isAdmin() ){

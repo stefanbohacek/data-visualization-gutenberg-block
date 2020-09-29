@@ -170,7 +170,15 @@ registerBlockType( 'ftf/dataviz-gutenberg-block', {
             type: 'string',
             default: ''
         },
+        showGridlines: {
+            type: 'boolean',
+            default: true
+        },        
         chartConfigJSON: {
+            type: 'string',
+            default: ''
+        },
+        chartOptionsJSON: {
             type: 'string',
             default: ''
         }
@@ -303,7 +311,9 @@ registerBlockType( 'ftf/dataviz-gutenberg-block', {
                 ignoreNullValues,
                 color,
                 colorScheme,
+                showGridlines,
                 chartConfigJSON,
+                chartOptionsJSON,
                 content
             },
             setAttributes,
@@ -357,6 +367,14 @@ registerBlockType( 'ftf/dataviz-gutenberg-block', {
                                 value: 'line'
                             },
                             {
+                                label: 'Scatter chart',
+                                value: 'scatter'
+                            },
+                            {
+                                label: 'Scatter chart with dates',
+                                value: 'scatter-dates'
+                            },
+                            {
                                 label: 'Pie chart',
                                 value: 'pie'
                             },
@@ -377,9 +395,13 @@ registerBlockType( 'ftf/dataviz-gutenberg-block', {
                                 value: 'table'
                             }
                         ] }
+                        help={ {
+                            'scatter-dates': 'Date should be in the second column of your dataset.'
+                        }[vizType] }
+
                     /> }
-                    { dataSource !== 'config' && [ 'line', 'bar', 'horizontalBar', 'pie', 'doughnut', 'polarArea', 'radar' ].indexOf( vizType ) !== -1 &&
-                        <div>
+                    <div>
+                    { dataSource !== 'config' &&
                             <SelectControl
                                 label="Color scheme (Palette size)"
                                 value={ colorScheme }
@@ -387,8 +409,8 @@ registerBlockType( 'ftf/dataviz-gutenberg-block', {
                                 options={ colorSchemeOptions }
                                 help="Colors will be adjusted based on the size of the dataset and the visualization type."
                             />
-
-                    { dataSource !== 'config' && ( colorbrewer && colorbrewer[colorScheme] && colorbrewer[colorScheme][8]  ) && <div>
+                    }
+                    { dataSource !== 'config' && ( colorbrewer && colorbrewer[colorScheme] && colorbrewer[colorScheme][8] ) && <div>
                         <div style={ { height: '40px', width: '100%', marginBottom: '20px', backgroundImage: colorScheme ? `linear-gradient(
                               to right,
                               ${colorbrewer[colorScheme][8][0]},
@@ -408,8 +430,16 @@ registerBlockType( 'ftf/dataviz-gutenberg-block', {
                               ${colorbrewer[colorScheme][8][7]} 87.5%
                             )` : '', display: colorScheme ? 'block' : 'none' } } ></div>
                             <p>Via <a href="https://colorbrewer2.org/" target="_blank">colorbrewer2.org</a>.</p>
-                            </div> }
-                        </div>                            
+                        </div> }
+                    </div>
+                    { [ 'line', 'bar', 'horizontalBar', 'scatter', 'scatter-dates' ].indexOf( vizType ) !== -1 && 
+                        <div>
+                            <CheckboxControl
+                                label="Show gridlines"
+                                checked={ showGridlines }
+                                onChange={ ( showGridlines ) => setState( { showGridlines } ) }
+                            />
+                        </div>
                     }
                     { dataSource !== 'config' && <SelectControl
                         label="Size"
@@ -472,7 +502,7 @@ registerBlockType( 'ftf/dataviz-gutenberg-block', {
                     { ( dataSource && dataSource === 'config' ) && <div>
                     <TextareaControl
                         label="Configuration object"
-                        help="Enter the JSON configuration object for your chart"
+                        help="Enter the configuration object for your chart"
                         value={ chartConfigJSON }
                         onChange={ ( chartConfigJSON ) => setState( { chartConfigJSON } ) }
                     />
@@ -547,16 +577,14 @@ registerBlockType( 'ftf/dataviz-gutenberg-block', {
                     { dataSource && dataSource !== 'config' && ( dataSourceURL || dataSourceFileID ) && <div>
                         <div>
                             <CheckboxControl
-                                label="Ignore empty and zero values"
-                                help="Hide columns with missing data or zero values."
+                                label="Hide columns with null values"
                                 checked={ ignoreNullValues }
                                 onChange={ ( ignoreNullValues ) => setState( { ignoreNullValues } ) }
                             />
                         </div>
                         <div>
                             <CheckboxControl
-                                label="Sort"
-                                help="Sort data by values in the first column."
+                                label="Sort by values in first column"
                                 checked={ sortData }
                                 onChange={ ( sortData ) => setState( { sortData } ) }
                             />
@@ -580,24 +608,22 @@ registerBlockType( 'ftf/dataviz-gutenberg-block', {
                             </div>
                         }
                         <TextControl
-                            label="Prefix"
+                            label="Add prefix before value"
                             placeholder="$"
                             type="text"
-                            help="Add optional prefix before data value, for example $."
                             value={ dataPrefix }
                             onChange={ ( dataPrefix ) => setState( { dataPrefix } ) }
                         />
                         <TextControl
-                            label="Suffix"
+                            label="Add suffix after value"
                             placeholder="%"
                             type="text"
-                            help="Add optional suffix after data value, for example %."
                             value={ dataSuffix }
                             onChange={ ( dataSuffix ) => setState( { dataSuffix } ) }
                         />                        
 
                     </div> }
-                    { dataSource !== 'config' && [ 'line', 'bar', 'horizontalBar' ].indexOf( vizType ) !== -1 &&
+                    { dataSource !== 'config' && [ 'line', 'bar', 'horizontalBar', 'scatter', 'scatter-dates' ].indexOf( vizType ) !== -1 &&
                     <div>
                         <CheckboxControl
                             label="Use logarithmic scale"
@@ -607,11 +633,22 @@ registerBlockType( 'ftf/dataviz-gutenberg-block', {
                         />
                     </div>
                     }
+                    { dataSource !== 'config' && <div>
+                        <TextareaControl
+                            label="Custom options"
+                            help="Add custom options for your chart"
+                            value={ chartOptionsJSON }
+                            onChange={ ( chartOptionsJSON ) => setState( { chartOptionsJSON } ) }
+                        />
+                        <p>See <a href="https://www.chartjs.org/docs/latest/getting-started/usage.html" target="_blank">chart.js documentation</a>.</p>
+                        </div>
+                    }
+
                 </PanelBody>
             </InspectorControls>,
             <div>
                 { ( !dataSource || ( dataSource === 'config' && !chartConfigJSON ) || ( dataSource === 'file' && !dataSourceFileID ) ) && <Placeholder icon="chart-pie" label="Data Visualization" instructions="" /> }
-                { dataSource === 'file' && dataSourceFileID && [ 'line', 'bar', 'horizontalBar', 'pie', 'doughnut', 'polarArea', 'radar' ].indexOf( vizType ) !== -1 && <canvas
+                { dataSource === 'file' && dataSourceFileID && [ 'line', 'bar', 'horizontalBar', 'pie', 'doughnut', 'polarArea', 'radar', 'scatter', 'scatter-dates' ].indexOf( vizType ) !== -1 && <canvas
                     class="ftf-dataviz-chart chart"
                     role="img"
                     aria-label={ label }
@@ -626,7 +663,9 @@ registerBlockType( 'ftf/dataviz-gutenberg-block', {
                     data-suffix={ dataSuffix }
                     data-axis-label-data={ label }
                     data-color-scheme={ colorScheme }
+                    data-show-gridlines={ showGridlines }
                     data-type={ vizType }
+                    data-options={ chartOptionsJSON }
                 ></canvas> }
                 { dataSource === 'config' && chartConfigJSON && <canvas
                     class="ftf-dataviz-chart chart"
