@@ -87,12 +87,41 @@ window.ftfHelpers.renderTable = function( tableEl, props ){
     tableEl.innerHTML = tableHTML + '</tbody>';
 }
 
+window.ftfHelpers.renderSVG = function( svgEl, props ){
+    let svgHTML = '200 okay';
+    const attributes = props.attributes;
+
+    console.log( 'attributes', attributes );
+    console.log( 'data', window.ftfDataviz[parseInt( attributes.dataSourceFileID )] );
+
+    jQuery.ajax({
+        url: ajaxurl,
+        data: {
+            action: 'get_svg_map_html',
+            map_style: attributes.mapStyle,
+            map_area: attributes.mapArea,
+            color_scheme: attributes.colorScheme,
+            data_prefix: attributes.dataPrefix,
+            data_suffix: attributes.dataSuffix,
+            data_label: attributes.label,
+            show_gridlines: attributes.showGridlines,
+            data: window.ftfDataviz[parseInt( attributes.dataSourceFileID )]
+        },
+        type: 'POST',
+        success: function( svgHTML ) {
+            console.log( 'svgHTML', svgHTML )
+            svgEl.innerHTML = svgHTML;
+        }
+    });
+
+}
+
 registerBlockType( 'ftf/dataviz-gutenberg-block', {
     title: __( 'Data visualization', 'ftf-dataviz-gutenberg-block' ),
     icon: 'chart-pie',
     category: 'widgets',
     keywords: [
-        __( 'data', 'dataviz', 'visualization', 'chart', 'pie', 'bar', 'doughnut', 'radar', 'polar', 'table' ),
+        __( 'data', 'dataviz', 'visualization', 'chart', 'pie', 'bar', 'doughnut', 'radar', 'polar', 'map', 'table' ),
     ],    
     // supports: {
     //     align: true,
@@ -142,6 +171,14 @@ registerBlockType( 'ftf/dataviz-gutenberg-block', {
             type: 'string',
             default: 'bar'
         },
+        mapStyle: {
+            type: 'string',
+            default: 'tile_grid'
+        },
+        mapArea: {
+            type: 'string',
+            default: 'US'
+        },
         vizSize: {
             type: 'string',
             default: 'large'
@@ -181,6 +218,10 @@ registerBlockType( 'ftf/dataviz-gutenberg-block', {
         chartOptionsJSON: {
             type: 'string',
             default: ''
+        },
+        chartBorderText: {
+            type: 'string',
+            default: ''
         }
     },
     edit: class extends Component {
@@ -194,6 +235,8 @@ registerBlockType( 'ftf/dataviz-gutenberg-block', {
 
             const canvasEl = document.querySelector('[data-block="' + clientId + '"] canvas');
             const tableEl = document.querySelector('[data-block="' + clientId + '"] table');
+            const svgEl = document.querySelector('[data-block="' + clientId + '"] .ftf-svg-placeholder');
+
             const props = this.props;
 
             if ( this.props.attributes.dataSourceFileID && ( typeof ftfDataviz === 'undefined' || !ftfDataviz[this.props.attributes.dataSourceFileID] ) ){
@@ -219,7 +262,11 @@ registerBlockType( 'ftf/dataviz-gutenberg-block', {
                         if ( tableEl ){
                             ftfHelpers.renderTable( tableEl, props );
                         }
-                    },
+
+                        if ( svgEl ){
+                            ftfHelpers.renderSVG( svgEl, props );
+                        }                        
+                    }
                 });
             } else {
                 console.log( 'found cached data...' );
@@ -230,6 +277,10 @@ registerBlockType( 'ftf/dataviz-gutenberg-block', {
 
                 if ( tableEl ){
                     ftfHelpers.renderTable( tableEl, props );
+                }
+
+                if ( svgEl ){
+                    ftfHelpers.renderSVG( svgEl, props );
                 }
             }
 
@@ -243,6 +294,7 @@ registerBlockType( 'ftf/dataviz-gutenberg-block', {
                 const clientId = this.props.clientId;
                 const canvasEl = document.querySelector('[data-block="' + clientId + '"] canvas');
                 const tableEl = document.querySelector('[data-block="' + clientId + '"] table');
+                const svgEl = document.querySelector('[data-block="' + clientId + '"] .ftf-svg-placeholder');
 
                 if ( this.props.attributes.dataSourceFileID && ( typeof ftfDataviz === 'undefined' || !ftfDataviz[this.props.attributes.dataSourceFileID] ) ){
                     console.log( 'fetching new data...', this.props.attributes );
@@ -267,6 +319,10 @@ registerBlockType( 'ftf/dataviz-gutenberg-block', {
                             if ( tableEl ){
                                 ftfHelpers.renderTable( tableEl, props );
                             }
+
+                            if ( svgEl ){
+                                ftfHelpers.renderSVG( svgEl, props );
+                            }                            
                         },
                     });
                 } else {
@@ -279,6 +335,10 @@ registerBlockType( 'ftf/dataviz-gutenberg-block', {
                     if ( tableEl ){
                         ftfHelpers.renderTable( tableEl, props );
                     }
+
+                    if ( svgEl ){
+                        ftfHelpers.renderSVG( svgEl, props );
+                    }                    
                 }
             }
         }
@@ -304,6 +364,8 @@ registerBlockType( 'ftf/dataviz-gutenberg-block', {
                 dataPrefix,
                 dataSuffix,
                 vizType,
+                mapStyle,
+                mapArea,
                 vizSize,
                 useLogScale,
                 sortData,
@@ -314,6 +376,7 @@ registerBlockType( 'ftf/dataviz-gutenberg-block', {
                 showGridlines,
                 chartConfigJSON,
                 chartOptionsJSON,
+                chartBorderText,
                 content
             },
             setAttributes,
@@ -383,13 +446,17 @@ registerBlockType( 'ftf/dataviz-gutenberg-block', {
                                 value: 'doughnut'
                             },
                             {
-                                label: 'Polar Area',
+                                label: 'Polar area',
                                 value: 'polarArea'
                             },
                             {
                                 label: 'Radar chart',
                                 value: 'radar'
                             },
+                            // {
+                            //     label: 'Map',
+                            //     value: 'map'
+                            // },
                             {
                                 label: 'Table',
                                 value: 'table'
@@ -400,6 +467,42 @@ registerBlockType( 'ftf/dataviz-gutenberg-block', {
                         }[vizType] }
 
                     /> }
+                    { vizType === 'map' && <div>
+                    <SelectControl
+                        label="Map style"
+                        value={ mapStyle }
+                        onChange={ ( mapStyle ) => setState( { mapStyle } ) }
+                        options={ [
+                            {
+                                label: 'Choose an option',
+                                value: '',
+                                disabled: true
+                            },                            
+                            {
+                                label: 'Tile grid',
+                                value: 'tile_grid'
+
+                            }
+                        ] }
+                    />
+                    <SelectControl
+                        label="Map ara"
+                        value={ mapArea }
+                        onChange={ ( mapArea ) => setState( { mapArea } ) }
+                        options={ [
+                            {
+                                label: 'Choose an option',
+                                value: '',
+                                disabled: true
+                            },                            
+                            {
+                                label: 'United States',
+                                value: 'US'
+
+                            }
+                        ] }
+                    />
+                    </div> }                    
                     <div>
                     { dataSource !== 'config' &&
                             <SelectControl
@@ -432,7 +535,7 @@ registerBlockType( 'ftf/dataviz-gutenberg-block', {
                             <p>Via <a href="https://colorbrewer2.org/" target="_blank">colorbrewer2.org</a>.</p>
                         </div> }
                     </div>
-                    { [ 'line', 'bar', 'horizontalBar', 'scatter', 'scatter-dates' ].indexOf( vizType ) !== -1 && 
+                    { [ 'line', 'bar', 'horizontalBar', 'scatter', 'scatter-dates', 'map' ].indexOf( vizType ) !== -1 && 
                         <div>
                             <CheckboxControl
                                 label="Show gridlines"
@@ -643,7 +746,14 @@ registerBlockType( 'ftf/dataviz-gutenberg-block', {
                         <p>See <a href="https://www.chartjs.org/docs/latest/getting-started/usage.html" target="_blank">chart.js documentation</a>.</p>
                         </div>
                     }
-
+                    <div>
+                        <TextareaControl
+                            label="Text border [EXPERIMENTAL]"
+                            help="Add text border around your chart"
+                            value={ chartBorderText }
+                            onChange={ ( chartBorderText ) => setState( { chartBorderText } ) }
+                        />
+                    </div>
                 </PanelBody>
             </InspectorControls>,
             <div>
@@ -666,6 +776,7 @@ registerBlockType( 'ftf/dataviz-gutenberg-block', {
                     data-show-gridlines={ showGridlines }
                     data-type={ vizType }
                     data-options={ chartOptionsJSON }
+                    data-border-text={ chartBorderText }
                 ></canvas> }
                 { dataSource === 'config' && chartConfigJSON && <canvas
                     class="ftf-dataviz-chart chart"
@@ -675,6 +786,7 @@ registerBlockType( 'ftf/dataviz-gutenberg-block', {
                 { dataSourceFileID && [ 'table' ].indexOf( vizType ) !== -1 &&
                     <table className="ftf-dataviz-table" border="0" cellpadding="5" width="100%" summary="This is the text alternative for the data visualization."></table>
                 }
+                { dataSourceFileID && [ 'map' ].indexOf( vizType ) !== -1 && <div class="ftf-svg-placeholder"></div> }
                 { dataSource === 'file' && <RichText
                     tagName="p"
                     className={ className }

@@ -554,58 +554,59 @@ ftfHelpers.renderChart = function( chartEl ){
         console.log( 'rendering chart...', chartEl, chartOptions );
         // console.log( 'data', chartOptions.data.datasets );
 
-        let newChart = new Chart( chartEl, chartOptions );
+        try{
+            let newChart = new Chart( chartEl, chartOptions );
+            if ( !ftfHelpers.isAdmin() ){
+                /* Chart.js accessibility via https://codepen.io/kurkle/pen/WNrwjMp */
 
-        if ( !ftfHelpers.isAdmin() ){
-            /* Chart.js accessibility via https://codepen.io/kurkle/pen/WNrwjMp */
+                let selectedIndex = -1;
+                const meta = newChart.getDatasetMeta( 0 );
 
-            let selectedIndex = -1;
-            const meta = newChart.getDatasetMeta( 0 );
-
-            function clearActive() {
-                if (selectedIndex > -1) {
-                    meta.controller.removeHoverStyle( meta.data[selectedIndex], 0, selectedIndex );
+                function clearActive() {
+                    if (selectedIndex > -1) {
+                        meta.controller.removeHoverStyle( meta.data[selectedIndex], 0, selectedIndex );
+                    }
                 }
-            }
 
-            function activate() {
-                meta.controller.setHoverStyle( meta.data[selectedIndex], 0, selectedIndex );
-                newChart.render();
-            }
+                function activate() {
+                    meta.controller.setHoverStyle( meta.data[selectedIndex], 0, selectedIndex );
+                    newChart.render();
+                }
 
-            function activateNext() {
-                clearActive();
-                selectedIndex = (selectedIndex + 1) % meta.data.length;
-                activate();
-            }
-
-            function activatePrev() {
-                clearActive();
-                selectedIndex = ( selectedIndex || meta.data.length ) -1;
-                activate();
-            }
-
-            chartEl.addEventListener( 'focus', function(){
-                if (selectedIndex === -1) {
-                    activateNext();
-                } else {
+                function activateNext() {
+                    clearActive();
+                    selectedIndex = (selectedIndex + 1) % meta.data.length;
                     activate();
                 }
-            } );
 
-            chartEl.addEventListener( 'blur', function(){
-                clearActive();
-                newChart.render();
-            } );
-
-            chartEl.addEventListener( 'keydown', function( e ) {
-                if ( e.key === 'ArrowRight' ) {
-                    activateNext();
-                } else if ( e.key === 'ArrowLeft' ) {
-                    activatePrev();
+                function activatePrev() {
+                    clearActive();
+                    selectedIndex = ( selectedIndex || meta.data.length ) -1;
+                    activate();
                 }
-            } );
-        }
+
+                chartEl.addEventListener( 'focus', function(){
+                    if (selectedIndex === -1) {
+                        activateNext();
+                    } else {
+                        activate();
+                    }
+                } );
+
+                chartEl.addEventListener( 'blur', function(){
+                    clearActive();
+                    newChart.render();
+                } );
+
+                chartEl.addEventListener( 'keydown', function( e ) {
+                    if ( e.key === 'ArrowRight' ) {
+                        activateNext();
+                    } else if ( e.key === 'ArrowLeft' ) {
+                        activatePrev();
+                    }
+                } );
+            }
+        } catch( err ){ /* noop */ }
     }
 }
 
@@ -619,4 +620,58 @@ ready( function(){
     Array.from( charts ).forEach( function( chartEl ){
         ftfHelpers.renderChart( chartEl );
     } );
+    let sliders = document.querySelectorAll( '.ftf-dataviz-slider-container' );
+
+    for ( const slider of sliders ) {
+      slider.addEventListener( 'input', function( ev ){
+        const dataVizEl = ev.target.closest( '.ftf-dataviz' );
+
+        // console.log( 'dataVizEl', dataVizEl );
+        // console.log( 'ev.target', ev.target );
+        // console.log( 'ev.target.dataset.data', ev.target.dataset.data );
+
+        dataVizEl.querySelector( '.ftf-dataviz-slider-title' ).innerHTML = ev.target.value;
+
+        const mapData = JSON.parse( ev.target.dataset.data );
+        const dataIndex = ev.target.value - ev.target.min;
+
+        let datapoints = {};
+
+        mapData.forEach( function( datapoint ){
+            datapoints[datapoint[0]] = datapoint[dataIndex+1]
+        } );
+
+        // console.log( 'datapoints', datapoints );
+
+        for ( const dataRow in datapoints ){
+            if ( dataRow && dataRow.length > 0 ){
+
+                let value;
+
+                if ( datapoints[dataRow] ){
+                    value = ev.target.dataset.prefix + datapoints[dataRow] + ev.target.dataset.suffix;
+                } else {
+                    value = datapoints[dataRow];
+                }
+
+                dataVizEl.querySelector( `rect.state.${ dataRow }` ).parentElement.querySelectorAll('text')[1].textContent = value;
+            }
+        }
+
+        console.log( {
+            min: ev.target.min,
+            max: ev.target.max,
+            value: ev.target.value,
+            index: dataIndex,
+            prefix: ev.target.dataset.prefix,
+            suffix: ev.target.dataset.suffix,
+            data: mapData
+        } );
+      } );
+    }
+
+
+
 } );
+
+// document.querySelector( 'rect.state.NY' );
