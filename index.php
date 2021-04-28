@@ -1032,8 +1032,8 @@ HTML;
         if ( !empty( $chart_border_text ) ){
             $style .= 'border:10px solid white;';
             $text_border_html = <<<HTML
-                <svg width="100%" height="100%" viewBox="0 0 {$attr_width} {$attr_height}" style="position: absolute;left: 0;right: 0;top: 0;bottom: 0; overflow: visible; pointer-events: none;">
-                    <path id="border-text-path-{$block_id}" fill="transparent" d="M 0 0  H {$attr_width} V {$attr_height} H 0 L 0 0"></path>
+                <svg width="100%" height="100%" viewBox="0 0 {$attr_width} {$attr_height}" style="position: absolute; left: 0; right: 0;top: 0;bottom: 0; overflow: visible; pointer-events: none;">
+                    <path id="border-text-path-{$block_id}" fill="transparent" d="M 0 0  H {$attr_width} V {$attr_height} H 0 L 0 0" style="pointer-events: none;"></path>
                     <animate
                        xlink:href    = "#text-path-{$block_id}"
                        attributeName = "startOffset"
@@ -1043,8 +1043,9 @@ HTML;
                        {$chart_border_text_animation_length}
                        repeatCount   = "indefinite"
                        fill          = "freeze"
+                       style         = "pointer-events: none;"
                     />
-                    <text width="100%" style="transform:translate3d(0,0,0);">
+                    <text width="100%" style="transform:translate3d(0,0,0);" style="pointer-events: none;">
                         <textPath id="text-path-{$block_id}" style="transform:translate3d(0,0,0); font-size: 0.75rem; fill: silver;" alignment-baseline="top" xlink:href="#border-text-path-{$block_id}">{$chart_border_text}</textPath>
                     </text>
                 </svg>
@@ -1060,7 +1061,7 @@ HTML;
                 tabIndex="0"
                 class="ftf-dataviz ftf-dataviz-chart chart {$class_names}"
                 {$width_height}
-                style="{$style} margin: 1.5rem auto;"
+                style="{$style} margin: 1.5rem auto; position: relative; left: 0; right: 0;top: 0;bottom: 0; z-index: 1000;"
                 role="img"
                 aria-label="{$data_label}"
                 data-config="{$chart_config}"
