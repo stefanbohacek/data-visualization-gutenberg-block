@@ -547,6 +547,13 @@ ftfHelpers.renderChart = function( chartEl ){
     }
 
     if ( ftfHelpers.isMobile() ){
+        let svgBorder = chartEl.parentElement.querySelector( 'svg' );
+
+        if ( svgBorder ){
+            svgBorder.setAttribute( 'viewBox', '0 0 500 500' );
+            svgBorder.querySelector( 'path' ).setAttribute( 'd', 'M 0 0  H 500 V 500 H 0 L 0 0' );
+            svgBorder.querySelector( 'textPath' ).style.fontSize = '24px';
+        }
         chartEl.height = chartEl.width;
     }
 
