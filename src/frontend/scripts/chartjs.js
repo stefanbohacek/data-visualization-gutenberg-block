@@ -260,7 +260,7 @@ ftfHelpers.renderChart = function( chartEl ){
                 if ( chartEl.dataset.logScale && chartData.length > 4 ){
                     /* Temporary fix for labels overlapping when using logarithmic scale. */
                     // axesValues[0].ticks.minRotation = 30;
-                    axesValues[0].ticks.maxTicksLimit = chartData.length;
+                    axesValues[0].ticks.maxTicksLimit = chartData.length * 1.3;
                 }
 
                 if ( ftfHelpers.isAdmin() ){
