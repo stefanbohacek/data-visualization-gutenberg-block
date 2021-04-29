@@ -859,21 +859,21 @@ SCRIPT;
             case 'scatter-dates':
                 switch ( $size ) {
                     case 'small':
-                        $width_height = 'width="500" height="400"';
                         $attr_width = 500;
                         $attr_height = 400;
+                        $width_height = 'width="' . $attr_width . '" height="' . $attr_height . '"';
                         $style = 'max-width: ' . $width_restriction_small . 'px;';
                         break;
                     case 'medium':
-                        $width_height = 'width="500" height="300"';
                         $attr_width = 500;
                         $attr_height = 300;
+                        $width_height = 'width="' . $attr_width . '" height="' . $attr_height . '"';
                         $style = 'max-width: ' . $width_restriction_medium . 'px;';
                         break;
                     case 'large':
-                        $width_height = 'width="500" height="200"';
                         $attr_width = 500;
-                        $attr_height = 200;                        
+                        $attr_height = 250;                        
+                        $width_height = 'width="' . $attr_width . '" height="' . $attr_height . '"';
                         $style = 'max-width: 100%;';
                         break;
                 }

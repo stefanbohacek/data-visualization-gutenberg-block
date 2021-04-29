@@ -248,19 +248,34 @@ ftfHelpers.renderChart = function( chartEl ){
                         display: true,
                         labelString: chartEl.dataset.label
                     },
-                    type: chartEl.dataset.logScale ? 'logarithmic' : 'linear',
+                    type: chartEl.dataset.logScale && chartEl.dataset.logScale === '1' ? 'logarithmic' : 'linear',
                     ticks: {
                         beginAtZero: true,
+                        autoSkip: true,
+                        min: 0,
                         userCallback: function( value, index, values)  {
                             return chartEl.dataset.prefix + value.toLocaleString() + chartEl.dataset.suffix;
                         }
-                    }
+                    },
+                    afterBuildTicks: (chartObj) => {
+                        const dataValues = [].concat.apply( [], datasets.map( function( datapoint ){
+                            return datapoint.data;
+                        } ) ).map( function( v ){
+                            return Math.pow( 10, Math.floor( v ).toString().length - 1 );
+                        } );
+
+                        if ( ftfHelpers.isMobile() ){
+                            chartObj.ticks.splice(0, chartObj.ticks.length);
+                        }
+
+                        chartObj.ticks.push(...dataValues);
+                    }                    
                 }];
 
                 if ( chartEl.dataset.logScale && chartData.length > 4 ){
                     /* Temporary fix for labels overlapping when using logarithmic scale. */
                     // axesValues[0].ticks.minRotation = 30;
-                    axesValues[0].ticks.maxTicksLimit = chartData.length * 1.3;
+                    axesValues[0].ticks.maxTicksLimit = chartData.length * 3;
                 }
 
                 if ( ftfHelpers.isAdmin() ){
@@ -428,7 +443,7 @@ ftfHelpers.renderChart = function( chartEl ){
                         display: true,
                         labelString: labelY
                     },
-                    type: chartEl.dataset.logScale ? 'logarithmic' : 'linear',
+                    type: chartEl.dataset.logScale && chartEl.dataset.logScale === '1' ? 'logarithmic' : 'linear',
                     ticks: {
                         // beginAtZero: true,
                         userCallback: function( value, index, values)  {
@@ -558,7 +573,7 @@ ftfHelpers.renderChart = function( chartEl ){
     }
 
     if ( chartOptions ){
-        console.log( 'rendering chart...', chartEl, chartOptions );
+        // console.log( 'rendering chart...', chartEl, chartOptions );
         // console.log( 'data', chartOptions.data.datasets );
 
         try{
@@ -665,20 +680,17 @@ ready( function(){
             }
         }
 
-        console.log( {
-            min: ev.target.min,
-            max: ev.target.max,
-            value: ev.target.value,
-            index: dataIndex,
-            prefix: ev.target.dataset.prefix,
-            suffix: ev.target.dataset.suffix,
-            data: mapData
-        } );
+        // console.log( {
+        //     min: ev.target.min,
+        //     max: ev.target.max,
+        //     value: ev.target.value,
+        //     index: dataIndex,
+        //     prefix: ev.target.dataset.prefix,
+        //     suffix: ev.target.dataset.suffix,
+        //     data: mapData
+        // } );
       } );
     }
-
-
-
 } );
 
 // document.querySelector( 'rect.state.NY' );
