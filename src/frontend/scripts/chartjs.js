@@ -16,6 +16,22 @@ ftfHelpers.isMobile = function(){
     return check;
 }
 
+ftfHelpers.sortUnique = function( arr ){
+    var sorted = arr;
+
+    // var cnts = sorted.reduce( function (obj, val) {
+    //     obj[val] = (obj[val] || 0) + 1;
+    //     return obj;
+    // }, {} );
+
+    // var sorted = Object.keys(cnts).sort( function(a,b) {
+    //     return cnts[b] - cnts[a];
+    // });
+
+    return sorted.sort().filter(function(el,i,a){return i===a.indexOf(el)})
+    // return sorted;
+}
+
 ftfHelpers.convertHex = function( hex, opacity ){
     /* https://gist.github.com/danieliser/b4b24c9f772066bcf0a6 */
     if (!hex){
@@ -253,29 +269,33 @@ ftfHelpers.renderChart = function( chartEl ){
                         beginAtZero: true,
                         autoSkip: true,
                         min: 0,
+                        maxTicksLimit: 10,
                         userCallback: function( value, index, values)  {
                             return chartEl.dataset.prefix + value.toLocaleString() + chartEl.dataset.suffix;
                         }
                     },
                     afterBuildTicks: (chartObj) => {
-                        const dataValues = [].concat.apply( [], datasets.map( function( datapoint ){
-                            return datapoint.data;
-                        } ) ).map( function( v ){
-                            return Math.pow( 10, Math.floor( v ).toString().length - 1 );
-                        } );
+                        if ( chartEl.dataset.logScale && chartEl.dataset.logScale === '1' ){
+                            const dataValues = [].concat.apply( [], datasets.map( function( datapoint ){
+                                return datapoint.data;
+                            } ) ).map( function( v ){
+                                return Math.pow( 10, Math.floor( v ).toString().length - 1 );
+                            } );
 
-                        if ( ftfHelpers.isMobile() ){
-                            chartObj.ticks.splice(0, chartObj.ticks.length);
+                            if ( ftfHelpers.isMobile() ){
+                                chartObj.ticks.splice(0, chartObj.ticks.length);
+                            }
+                            
+                            chartObj.ticks.push(...dataValues);
+                            chartObj.ticks = ftfHelpers.sortUnique( chartObj.ticks );                            
                         }
-
-                        chartObj.ticks.push(...dataValues);
                     }                    
                 }];
 
                 if ( chartEl.dataset.logScale && chartData.length > 4 ){
                     /* Temporary fix for labels overlapping when using logarithmic scale. */
                     // axesValues[0].ticks.minRotation = 30;
-                    axesValues[0].ticks.maxTicksLimit = chartData.length * 3;
+                    axesValues[0].ticks.maxTicksLimit = chartData.length * 2;
                 }
 
                 if ( ftfHelpers.isAdmin() ){
