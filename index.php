@@ -1036,7 +1036,7 @@ HTML;
                     <path id="border-text-path-{$block_id}" fill="transparent" d="M 0 0  H {$attr_width} V {$attr_height} H 0 L 0 0" style="pointer-events: none;"></path>
                     
                     <text width="100%" style="transform:translate3d(0,0,0);" style="pointer-events: none;">
-                        <textPath id="text-path-{$block_id}" style="transform:translate3d(0,0,0); font-size: 0.75rem; fill: silver;" alignment-baseline="top" xlink:href="#border-text-path-{$block_id}">{$chart_border_text}
+                        <textPath id="text-path-{$block_id}" style="transform:translate3d(0,0,0); font-family: monospace; font-size: 0.75rem; fill: silver;" alignment-baseline="top" xlink:href="#border-text-path-{$block_id}">{$chart_border_text}
                             <animate
                                xlink:href    = "#text-path-{$block_id}"
                                attributeName = "startOffset"
