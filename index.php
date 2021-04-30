@@ -1027,10 +1027,12 @@ HTML;
 
 
      
+        $wrapper_styles = '';
         $text_border_html = '';
 
         if ( !empty( $chart_border_text ) ){
             // $style .= 'border:10px solid white;';
+            $wrapper_styles = 'padding: 10px 40px;';
             $text_border_html = <<<HTML
                 <svg width="100%" height="100%" viewBox="0 0 {$attr_width} {$attr_height}" style="position: absolute; left: 0; right: 0;top: 0;bottom: 0; overflow: visible; pointer-events: none; z-index: 10;">
                     <path id="border-text-path-{$block_id}" fill="transparent" d="M 0 0  H {$attr_width} V {$attr_height} H 0 L 0 0" style="pointer-events: none;"></path>
@@ -1057,7 +1059,7 @@ HTML;
         $class_names = isset( $attributes['className'] ) ? $attributes['className'] : '';
 
         $canvas_html .= <<<HTML
-        <div class="ftf-dataviz-chart-wrapper" style="position: relative;">
+        <div class="ftf-dataviz-chart-wrapper" style="position: relative; {$wrapper_styles}">
             {$text_border_html}
             <canvas
                 tabIndex="0"
