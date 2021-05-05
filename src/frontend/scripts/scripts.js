@@ -1,16 +1,15 @@
 'use strict';
-const ftfHelpers = {
-    ready: function( fn ) {
-    /*
-        ftfHelpers.ready( function(){
+window.ftfHelpers = window.ftfHelpers || {}
 
-        } );
-    */
-        if ( document.readyState != 'loading' ){
-            fn();
-        } else {
-            document.addEventListener( 'DOMContentLoaded', fn );
-        }
+window.ftfHelpers.ready = function( fn ) {
+/*
+    ftfHelpers.ready( function(){
+
+    } );
+*/
+    if ( document.readyState != 'loading' ){
+        fn();
+    } else {
+        document.addEventListener( 'DOMContentLoaded', fn );
     }
 }
-
