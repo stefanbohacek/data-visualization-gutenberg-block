@@ -776,7 +776,6 @@ registerBlockType( 'ftf/dataviz-gutenberg-block', {
                     data-show-gridlines={ showGridlines }
                     data-type={ vizType }
                     data-options={ chartOptionsJSON }
-                    data-border-text={ chartBorderText }
                 ></canvas> }
                 { dataSource === 'config' && chartConfigJSON && <canvas
                     class="ftf-dataviz-chart chart"

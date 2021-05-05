@@ -1070,7 +1070,6 @@ HTML;
                 aria-label="{$data_label}"
                 data-config="{$chart_config}"
                 data-options="{$chart_options}"
-                data-border-text="{$chart_border_text}"
                 data-size="{$size}"
                 data-source-id="{$source_file_id}"
                 data-label="{$data_label}"
