@@ -134,7 +134,7 @@ window.ftfHelpers.renderChart = function( chartEl ){
                 chartData = JSON.parse( JSON.stringify( window.ftfDataviz[parseInt( chartEl.dataset.sourceId )].data_labels_raw ) );
                 chartLabels = JSON.parse( JSON.stringify( window.ftfDataviz[parseInt( chartEl.dataset.sourceId )].data_series_raw ) );
             }
-            else if ( chartEl.dataset.sort && chartEl.dataset.sort === 'true' ){
+            else if ( chartEl.dataset.sort && ( chartEl.dataset.sort === 'true' || chartEl.dataset.sort == 1 ) ){
                 chartLabels = JSON.parse( JSON.stringify( window.ftfDataviz[parseInt( chartEl.dataset.sourceId )].data_labels_sorted ) );
                 chartData = JSON.parse( JSON.stringify( window.ftfDataviz[parseInt( chartEl.dataset.sourceId )].data_series_sorted ) );
             } else {
@@ -165,7 +165,7 @@ window.ftfHelpers.renderChart = function( chartEl ){
         }
 
 
-        if ( chartEl.dataset.sort && chartEl.dataset.sort === 'true' && chartEl.dataset.limit ){
+        if ( chartEl.dataset.sort && ( chartEl.dataset.sort === 'true' || chartEl.dataset.sort == 1 ) && chartEl.dataset.limit ){
             chartLabels = chartLabels.slice( 0, chartEl.dataset.limit );
             chartData = chartData.slice( 0, chartEl.dataset.limit );
         }
