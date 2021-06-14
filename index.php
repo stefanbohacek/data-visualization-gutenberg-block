@@ -939,7 +939,7 @@ SCRIPT;
             $table_css = ' style="max-width:' . $width_restriction_medium . 'px; margin: 0 auto;" ';
         }
 
-        if ( $data_sort === 'true' ){
+        if ( $data_sort === 'true' || $data_sort == 1 ){
             $data_labels = $data['data_labels_sorted'];
             $data_series = $data['data_series_sorted'];
         } else {
