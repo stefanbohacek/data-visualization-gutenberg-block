@@ -410,7 +410,9 @@ Object(_wordpress_blocks__WEBPACK_IMPORTED_MODULE_7__["registerBlockType"])('ftf
   //     align: true,
   // },
   attributes: {
-    anchor: true,
+    anchor: {
+      type: 'string'
+    },
     label: {
       type: 'string',
       default: ''
@@ -987,8 +989,7 @@ Object(_wordpress_blocks__WEBPACK_IMPORTED_MODULE_7__["registerBlockType"])('ftf
           "data-color-scheme": colorScheme,
           "data-show-gridlines": showGridlines,
           "data-type": vizType,
-          "data-options": chartOptionsJSON,
-          "data-border-text": chartBorderText
+          "data-options": chartOptionsJSON
         }), dataSource === 'config' && chartConfigJSON && Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_5__["createElement"])("canvas", {
           class: "ftf-dataviz-chart chart",
           role: "img",

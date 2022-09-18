@@ -127,7 +127,9 @@ registerBlockType( 'ftf/dataviz-gutenberg-block', {
     //     align: true,
     // },
     attributes: {
-        anchor: true,
+        anchor: {
+            type: 'string'
+        },
         label: {
             type: 'string',
             default: ''
