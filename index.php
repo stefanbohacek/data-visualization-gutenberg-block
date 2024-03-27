@@ -739,14 +739,16 @@ SCRIPT;
         $ignore_null = isset( $attributes['ignoreNullValues'] ) ? $attributes['ignoreNullValues'] : '';
 
         $attachment = get_attached_file( $attributes['dataSourceFileID'] );
-        $csv_file = file( $attachment );
-        $data = self::parse_csv( $csv_file );
-
-        $chart_labels = $data['data_labels'];
-        $chart_data = $data['data_series'];
-
-        $data['data_labels'] = $chart_labels;
-        $data['data_series'] = $chart_data;
+        if (!empty($attachment)){
+            $csv_file = file( $attachment );
+            $data = self::parse_csv( $csv_file );
+    
+            $chart_labels = $data['data_labels'];
+            $chart_data = $data['data_series'];
+    
+            $data['data_labels'] = $chart_labels;
+            $data['data_series'] = $chart_data;
+        }
         return $data;
     }
 

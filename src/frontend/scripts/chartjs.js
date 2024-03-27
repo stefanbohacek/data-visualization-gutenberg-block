@@ -1,12 +1,15 @@
 'use strict';
 
-function ready( fn ) {
-    if ( document.readyState != 'loading' ){
-        fn();
-    } else {
-        document.addEventListener( 'DOMContentLoaded', fn );
+if (!window.ready){
+    window.ready = ( fn ) => {
+        if ( document.readyState != 'loading' ){
+            fn();
+        } else {
+            document.addEventListener( 'DOMContentLoaded', fn );
+        }
     }
 }
+
 
 window.ftfHelpers = window.ftfHelpers || {};
 
@@ -492,10 +495,10 @@ window.ftfHelpers.renderChart = function( chartEl ){
                                    'ticks': {
                                         beginAtZero: false,
                                         stepSize: 10,
-
-                                        callback: (value) => {
-                                          return new Date( value ).toLocaleDateString( navigator.language, { month: 'long', year: 'numeric' } );
-                                        },
+                                        // TODO: Fix scatter plot date label, using default behavior for now. 
+                                        // callback: (value) => {
+                                        //   return new Date( value ).toLocaleDateString( navigator.language, { month: 'long', year: 'numeric' } );
+                                        // },
                                     }
                                 }
                             ],
